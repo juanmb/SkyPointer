@@ -50,8 +50,8 @@ For development, it is strongly recommended to install this package into a
 
 * Start Stellarium
 
-* Enable the plugin *Telescope control* in Stellarium. It was not enabled, you
-  will need to restart Stellarium (only the first time).
+* Enable the plugin *Telescope control* in Stellarium. If it was disabled,
+  you will need to restart Stellarium (only the first time).
 
 * In the configuration window of the *Telescope control* plugin, add a new
   telescope and select the option "External software or a remote computer".
@@ -60,7 +60,7 @@ For development, it is strongly recommended to install this package into a
 
 * Enter the TCP port 100001 (or the port you passed to the `sky-pointer` command).
 
-* Close the dialog a press "Connect".
+* Close the dialog and press "Connect".
 
 Now you can send the equatorial coordinates of the selected object in
 Stellarium to the *SkyPointer* server by pressing `Ctrl+1`.
