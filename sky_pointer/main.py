@@ -18,7 +18,6 @@ def decode_packet(data):
 
 def encode_packet(coords):
     """Encode Stellarium client-server protocol packet"""
-    fields = struct.unpack('<HHQIi', data)
     ra = long(coords.ra/pi*0x80000000)
     dec = long(coords.dec/pi*0x80000000)
     return struct.pack('<HHQIii', 24, 0, time.time()*1e6, ra, dec, 0)
@@ -106,7 +105,7 @@ def main():
     logging.info("---")
 
     server = TelescopeServer(args.iface, args.port, obs)
-    logging.info("Server listening on port %d" % PORT)
+    logging.info("Server listening on port %d" % args.port)
 
     try:
         server.serve_forever()
