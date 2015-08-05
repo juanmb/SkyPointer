@@ -35,6 +35,7 @@ class PointingModel(object):
         self.inst_refs = [EqCoords(0,0), EqCoords(pi/2,0)]
         # timestamp of observation of reference stars
         self.t_refs = [0, 0]
+        self.__ref_count = 0
 
     def __local_eq(self, eq, t):
         return EqCoords(eq[0] - K*SEC2RAD*(t-self.t0), eq[1])
@@ -57,17 +58,16 @@ class PointingModel(object):
         # calc transformation matrix
         self.T = U.dot(np.linalg.inv(V))
 
-    def __set_ref_star(self, n, eq, inst, t=0):
+    def _set_ref_n(self, n, eq, inst, t=0):
         self.t_refs[n] = t or time.time()
         self.eq_refs[n] = EqCoords(eq[0], eq[1])
         self.inst_refs[n] = Coords(inst[0], inst[1])
 
-    def set_ref_star1(self, eq, inst, t=0):
-        self.__set_ref_star(0, eq, inst, t)
-
-    def set_ref_star2(self, eq, inst, t=0):
-        self.__set_ref_star(1, eq, inst, t)
-        self.__compute_matrix()
+    def set_ref(self, eq, inst, t=0):
+        self._set_ref_n(self.__ref_count % 2, eq, inst, t)
+        if self.__ref_count:
+            self.__compute_matrix()
+        self.__ref_count += 1
 
     def eq_to_inst(self, eq, t=0):
         t = t or time.time()
@@ -79,8 +79,8 @@ class PointingModel(object):
 if __name__ == '__main__':
     # usage example
     pm = PointingModel(t=75600)
-    pm.set_ref_star1([0.034470, 0.506809], [1.732239, 1.463808], t=77276)
-    pm.set_ref_star2([0.618501, 1.557218], [5.427625, 0.611563], t=77780.75)
+    pm.set_ref([0.034470, 0.506809], [1.732239, 1.463808], t=77276)
+    pm.set_ref([0.618501, 1.557218], [5.427625, 0.611563], t=77780.75)
 
     # target star
     tgt = EqCoords(0.188132, -0.314822)

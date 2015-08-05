@@ -6,14 +6,14 @@ import logging
 from math import pi
 import socket
 import select
-import ephem
+import coords
 import argparse
 
 
 def decode_packet(data):
     """Decode Stellarium client-server protocol packet"""
     fields = struct.unpack('<HHQIi', data)
-    return ephem.Equatorial(fields[3]*pi/0x80000000, fields[4]*pi/0x80000000)
+    return coords.EqCoords(fields[3]*pi/0x80000000, fields[4]*pi/0x80000000)
 
 
 def encode_packet(coords):
@@ -24,9 +24,7 @@ def encode_packet(coords):
 
 
 class TelescopeServer(object):
-    def __init__(self, host, port, observer):
-        self.observer = observer
-
+    def __init__(self, host, port):
         sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((host, port))
@@ -35,19 +33,7 @@ class TelescopeServer(object):
 
         # List of socket objects that are currently open
         self.sockets = [sock]
-        self.pos = ephem.Equatorial(0, pi/2)
-
-    def __compute_local(self, coords):
-        body = ephem.FixedBody()
-        body._ra = coords.ra
-        body._dec = coords.dec
-        self.observer.date = ephem.now()
-        body.compute(self.observer)
-        return body
-
-    def __hour_angle(self, coords):
-        self.observer.date = ephem.now()
-        return ephem.hours(self.observer.sidereal_time() - coords.ra)
+        self.pos = coords.EqCoords(0, pi/2)
 
     def serve_forever(self):
         while True:
@@ -67,12 +53,7 @@ class TelescopeServer(object):
                         target = decode_packet(data)
                         self.pos = target
 
-                        #body = self.__compute_local(target)
-                        logging.info(
-                            "Target: RA %s  dec %s  " % (target.ra, target.dec) +
-                            "HA %s" % self.__hour_angle(target)
-                            #"Az %s  Alt %s  " % (body.az, body.alt)
-                        )
+                        logging.info("Target: %s" % target)
                     else:
                         self.sockets.remove(conn)
                         logging.debug("Client disconnected")
@@ -87,24 +68,11 @@ def main():
                         help='Listenging TCP port (default: 10001)')
     parser.add_argument('--iface', '-i', default='0.0.0.0',
                         help='Listenging network interface (default: 0.0.0.0)')
-    parser.add_argument('--lat', '-l', default='43:31:48.0', help="Observer's latitude")
-    parser.add_argument('--long', '-L', default='-5:40:12.0', help="Observer's longitude")
     args = parser.parse_args()
-
-    obs = ephem.Observer()
-    #obs.epoch = ephem.now()
-    obs.lat = args.lat
-    obs.long = args.long
 
     logging.basicConfig(format='%(message)s', level=logging.DEBUG)
 
-    logging.info("Latitude:  %s" % obs.lat)
-    logging.info("Longitude: %s" % obs.long)
-    #logging.info("Elevation: %s" % obs.elev)
-    logging.info("Epoch:     %s" % obs.epoch)
-    logging.info("---")
-
-    server = TelescopeServer(args.iface, args.port, obs)
+    server = TelescopeServer(args.iface, args.port)
     logging.info("Server listening on port %d" % args.port)
 
     try:
