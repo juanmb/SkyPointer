@@ -47,17 +47,13 @@ class Pointer:
         logging.debug('M %d %d' % (az, alt))
         self.ser.write('M %d %d\r' % (az, alt))
 
-    def move2(self, az, alt):
-        def move_fast(x, y):
-            time.sleep(0.5)
-            if self.__run:
-                self.move(x, y)
-
-        self.move(trim(az), trim(alt)) # move one step
-        threading.Thread(target=move_fast, args=(az, alt)).start()
-        self.__run = True
+    def stop(self):
+        self.__run = False
+        logging.debug('S')
+        self.ser.write('S\r')
 
     def enable_laser(self, enable):
+        logging.debug('L')
         self.ser.write('L %d\r' % int(enable))
 
     def get_pos(self):
@@ -65,11 +61,6 @@ class Pointer:
         logging.debug('P')
         self.ser.write('P\r')
         return self.ser.read(12)
-
-    def stop(self):
-        self.__run = False
-        logging.debug('S')
-        self.ser.write('S\r')
 
 
 pipe = open(DEVICE, 'r')
@@ -108,11 +99,13 @@ worker_thread.daemon = True
 worker_thread.start()
 
 stop_t = time.time()
+laser_t = time.time()
 
 def send_after(delay, cmd):
     def thread():
         time.sleep(delay)
-        queue.put(cmd)
+        if time.time() - laser_t > delay:
+            queue.put(cmd)
     threading.Thread(target=thread).start()
 
 def move_after(delay, cmd):
@@ -129,17 +122,20 @@ while True:
     if _type == 1:
         #logging.debug("Button %d %s" % (number, 'pressed' if value else 'released'))
         if number == 0:
+            laser_t = time.time()
             queue.put(LASER_ON if value else LASER_OFF)
 
     elif _type == 2:
         #logging.debug("Joystick %d. Value: %d" % (number, value))
         if value:
             if number == 4:
+                laser_t = time.time()
                 queue.put(LASER_ON)
                 queue.put(STEP_LEFT if value > 0 else STEP_RIGHT)
                 move_after(0.5, MOVE_LEFT if value > 0 else MOVE_RIGHT)
                 send_after(4, LASER_OFF)
             elif number == 5:
+                laser_t = time.time()
                 queue.put(LASER_ON)
                 queue.put(STEP_UP if value > 0 else STEP_DOWN)
                 move_after(0.5, MOVE_UP if value > 0 else MOVE_DOWN)
