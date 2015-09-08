@@ -38,7 +38,7 @@ class PointingModel(object):
         self.__ref_count = 0
 
     def __local_eq(self, eq, t):
-        return EqCoords(eq[0] - K*SEC2RAD*(t-self.t0), eq[1])
+        return EqCoords(eq[0] - K*SEC2RAD*(t - self.t0), eq[1])
 
     def __compute_matrix(self):
         # direction cosine of reference stars in instrumental coord. system
@@ -51,11 +51,11 @@ class PointingModel(object):
         v2 = cosine(self.__local_eq(self.eq_refs[1], self.t_refs[1]))
         v3 = orthonormal(v1, v2)
 
-        # Generate matrices
+        # generate matrices
         U = np.hstack((u1, np.hstack((u2, u3))))
         V = np.hstack((v1, np.hstack((v2, v3))))
 
-        # calc transformation matrix
+        # calculate the transformation matrix T
         self.T = U.dot(np.linalg.inv(V))
 
     def _set_ref_n(self, n, eq, inst, t=0):
@@ -65,6 +65,7 @@ class PointingModel(object):
 
     def set_ref(self, eq, inst, t=0):
         self._set_ref_n(self.__ref_count % 2, eq, inst, t)
+        # if there are two reference stars, compute the T matrix
         if self.__ref_count:
             self.__compute_matrix()
         self.__ref_count += 1
