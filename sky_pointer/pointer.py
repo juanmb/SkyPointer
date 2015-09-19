@@ -9,6 +9,10 @@ class Pointer:
         self.__pm = PointingModel()
         self.__hw = Hardware(device, baud)
         self.target = Coords(0, 0)
+        self.hid = self.get_id()
+
+    def get_id(self):
+        return self.__hw.get_id()
 
     def set_ref(self):
         self.target = self.get_coords()

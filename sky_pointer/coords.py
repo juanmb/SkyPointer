@@ -14,6 +14,10 @@ class Coords(object):
         else:
             raise IndexError("Invalid index: %s" % key)
 
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+                and self.__dict__ == other.__dict__)
+
     def __str__(self):
         return 'X: %3.4f deg\tY: %3.4f deg' % (180/pi*self.x, 180/pi*self.y)
 
@@ -41,3 +45,5 @@ if __name__ == '__main__':
     c1 = Coords(2*pi+0.034, -pi/2+0.01)
     print c1
     print c1[0], c1[1]
+
+    print Coords(1, 2) == Coords(1, 2)

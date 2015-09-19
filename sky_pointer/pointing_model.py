@@ -42,6 +42,13 @@ class PointingModel(object):
 
     def __compute_matrix(self):
         # direction cosine of reference stars in instrumental coord. system
+        if self.inst_refs[0] == self.inst_refs[1]:
+            raise ValueError("Invalid reference stars. "
+                             "Instrument coordinates must be different")
+        if self.eq_refs[0] == self.eq_refs[1]:
+            raise ValueError("Invalid reference stars. "
+                             "Equatorial coordinates must be different")
+
         u1 = cosine(self.inst_refs[0])
         u2 = cosine(self.inst_refs[1])
         u3 = orthonormal(u1, u2)

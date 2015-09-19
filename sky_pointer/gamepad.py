@@ -21,16 +21,18 @@ class Gamepad:
             t, value, _type, n = struct.unpack('IhBB', self.__pipe.read(8))
 
             if _type == 1:
-                print "Button %d %s" % (n, 'pressed' if value else 'released')
+                #print "Button %d %s" % (n, 'pressed' if value else 'released')
                 if n == 0:
                     off_tmr.cancel()
                     self.pt.enable_laser(value)
                 elif n == 1:
                     if value:
                         print self.pt.get_coords()
+                        print self.pt.get_refs()[0], self.pt.get_refs()[1]
                 elif n == 4:
                     if value:
                         print "goto target1"
+                        self.pt.enable_laser(1)
                         off_tmr.cancel()
                         off_tmr = Timer(4, self.pt.enable_laser, (0,))
                         off_tmr.start()
@@ -40,6 +42,7 @@ class Gamepad:
                 elif n == 5:
                     if value:
                         off_tmr.cancel()
+                        self.pt.enable_laser(1)
                         off_tmr = Timer(4, self.pt.enable_laser, (0,))
                         off_tmr.start()
                         print "goto target2"
@@ -49,14 +52,17 @@ class Gamepad:
                 elif n == 8:
                     if value:
                         print "set ref"
-                        self.pt.set_ref()
+                        try:
+                            self.pt.set_ref()
+                        except ValueError as e:
+                            print e
 
             elif _type == 2:
-                print "Joystick %d. Value: %d" % (n, value)
+                #print "Joystick %d. Value: %d" % (n, value)
                 if value:
                     if n in (4, 5):
                         off_tmr.cancel()
-                        self.pt.enable_laser(value)
+                        self.pt.enable_laser(1)
                         run_tmr.cancel()
                         if n == 4:
                             self.pt.steps(sign(value), 0)
@@ -81,6 +87,8 @@ if __name__ == '__main__':
 
     ptr = Pointer()
     pad = Gamepad(ptr, dev)
+    print "Hardware:", ptr.hid
+
     try:
         pad.loop()
     except KeyboardInterrupt:

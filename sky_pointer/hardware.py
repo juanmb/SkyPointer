@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import time
 import serial
 import threading
 from coords import Coords
@@ -10,12 +11,13 @@ STEPS = 3200
 class Hardware:
     def __init__(self, device='/dev/ttyUSB0', baud=115200):
         self.__lock = threading.Lock()
-        self.__ser = serial.Serial(device, baud)
+        self.__ser = serial.Serial(device, baud, timeout=1)
+        self.__ser.flushInput()
+        time.sleep(1.5)
 
     def __send_command(self, cmd, ret_len=3, ret_ok='OK'):
         self.__lock.acquire()
         try:
-            self.__ser.flushInput()
             self.__ser.write(cmd+'\r')
             ret = self.__ser.read(ret_len)
         finally:
@@ -25,6 +27,9 @@ class Hardware:
             raise IOError('Serial command "%s" returned "%s"' % (cmd, ret))
 
         return ret
+
+    def get_id(self):
+        return self.__send_command('I', ret_len=15, ret_ok='SkyPointer')
 
     def enable_laser(self, enable):
         self.__send_command('L %d' % int(enable))
