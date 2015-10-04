@@ -17,14 +17,15 @@ def decode_packet(data):
 
 def encode_packet(coords):
     """Encode Stellarium client-server protocol packet"""
-    ra = long(coords.ra/pi*0x80000000)
-    dec = long(coords.dec/pi*0x80000000)
+    ra = long((coords[0] % (2*pi))/pi*0x80000000)
+    dec = long(coords[1]/pi*0x80000000)
     return struct.pack('<HHQIii', 24, 0, time.time()*1e6, ra, dec, 0)
 
 
 class Server(object):
-    def __init__(self, host, port):
-        sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+    def __init__(self, pointer, host='0.0.0.0', port='10001'):
+        self.ptr = pointer
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((host, port))
         sock.listen(5)
@@ -32,7 +33,6 @@ class Server(object):
 
         # List of socket objects that are currently open
         self.sockets = [sock]
-        self.pos = coords.EqCoords(0, 0)
 
     def serve_forever(self):
         while True:
@@ -49,13 +49,16 @@ class Server(object):
                     except socket.error:
                         continue
                     if data:
-                        target = decode_packet(data)
-                        self.pos = target
+                        tgt = coords.EqCoords(*decode_packet(data))
+                        try:
+                            self.ptr.goto(tgt)
+                        except ValueError as e:
+                            logging.debug(e)
 
-                        logging.info("Target: %s" % target)
+                        logging.info("Target: %s" % tgt)
                     else:
                         self.sockets.remove(conn)
                         logging.debug("Client disconnected")
 
             for s in self.sockets[1:]:
-                s.send(encode_packet(self.pos))
+                s.send(encode_packet(self.ptr.get_coords()))

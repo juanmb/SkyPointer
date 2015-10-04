@@ -7,7 +7,7 @@ class Coords(object):
         self.x, self.y = x, y
 
     def __getitem__(self, key):
-        if key == 0 :
+        if key == 0:
             return self.x
         elif key == 1:
             return self.y

@@ -3,7 +3,6 @@
 import time
 import serial
 import threading
-from coords import Coords
 
 STEPS = 3200
 
@@ -34,16 +33,16 @@ class Hardware:
     def enable_laser(self, enable):
         self.__send_command('L %d' % int(enable))
 
-    def goto(self, az, alt):
-        self.__send_command('G %d %d' % (az, alt))
+    def goto(self, ha, el):
+        self.__send_command('G %d %d' % (ha, el))
 
-    def move(self, az, alt):
-        self.__send_command('M %d %d' % (az, alt))
+    def move(self, ha, el):
+        self.__send_command('M %d %d' % (ha, el))
 
     def stop(self):
         self.__send_command('S')
 
     def get_pos(self):
         ret = self.__send_command('P', ret_len=12, ret_ok='P ')
-        az, alt = ret.strip().split()[1:3]
-        return int(az), int(alt)
+        ha, el = ret.strip().split()[1:3]
+        return int(ha), int(el)

@@ -9,7 +9,7 @@ setup(
     url='https://github.com/juanmb/SkyPointer',
     license='MIT',
     author='Juan Menendez',
-    install_requires=['pyserial'],
+    install_requires=['pyserial', 'numpy'],
     author_email='juanmb@gmail.com',
     description='Software for controlling a motorized sky-pointing laser',
     packages=['sky_pointer'],
