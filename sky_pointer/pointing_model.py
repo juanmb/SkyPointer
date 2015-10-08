@@ -78,11 +78,11 @@ class PointingModel(object):
     def __compute_matrix(self):
         # direction cosine of reference stars in instrumental coord. system
         if self.inst_refs[0] == self.inst_refs[1]:
-            raise ValueError("Invalid reference stars. "
-                             "Instrument coordinates must be different")
+            raise ValueError("Invalid reference stars: "
+                             "Instrument coordinates must be different!")
         if self.eq_refs[0] == self.eq_refs[1]:
-            raise ValueError("Invalid reference stars. "
-                             "Equatorial coordinates must be different")
+            raise ValueError("Invalid reference stars: "
+                             "Equatorial coordinates must be different!")
 
         u1 = self.app_to_real_cosine(self.inst_refs[0])
         u2 = self.app_to_real_cosine(self.inst_refs[1])
@@ -117,7 +117,7 @@ class PointingModel(object):
     def eq_to_inst(self, eq, t=0):
         """ Convert equatorial to instrumental coordinates"""
         if not self.__computed:
-            raise ValueError("Instrument coordinates not aligned")
+            raise ValueError("Instrument coordinates not aligned!")
 
         v = self.T.dot(eq_cosine(self.__local_eq(eq, t or time.time())))
         # obtain phi and theta from direction cosine
@@ -127,7 +127,7 @@ class PointingModel(object):
     def inst_to_eq(self, inst, t=0):
         """ Convert instrumental to equatorial coordinates"""
         if not self.__computed:
-            raise ValueError("Instrument coordinates not aligned")
+            raise ValueError("Instrument coordinates not aligned!")
 
         v = self.Tinv.dot(self.app_to_real_cosine(inst))
         # obtain AR and dec from direction cosine

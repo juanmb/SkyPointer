@@ -30,10 +30,10 @@ class Pointer:
         return self.__hw.get_id()
 
     def set_ref(self):
-        self.__pm.set_ref(self.target, self.get_coords())
+        self.__pm.set_ref(self.target, self.get_inst_coords())
 
     def get_refs(self):
-        return self.__pm.inst_refs
+        return self.__pm.eq_refs
 
     def steps(self, ha, el):
         self.__hw.move(ha, el)
@@ -53,8 +53,11 @@ class Pointer:
         self.__hw.enable_laser(enable)
 
     def get_coords(self):
-        return __pm.inst_to_eq(steps2rad(self.__hw.get_pos()))
+        return self.__pm.inst_to_eq(steps2rad(*self.__hw.get_pos()))
+
+    def get_inst_coords(self):
+        return Coords(*steps2rad(*self.__hw.get_pos()))
 
     def goto(self, eq):
         self.target = eq
-        self.__hw.goto(*rad2step(self.__pm.eq_to_inst(eq)))
+        self.__hw.goto(*rad2steps(*self.__pm.eq_to_inst(eq)))

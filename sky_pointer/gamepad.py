@@ -29,26 +29,33 @@ class Gamepad:
                 elif n == 1:
                     if value:
                         tgt = self.ptr.target
-                        mot = self.ptr.get_coords()
-                        logging.info("Target: %f, %f\tMotors: %f, %f" %
-                                     (tgt[0], tgt[1], mot[0], mot[1]))
+                        try:
+                            mot = self.ptr.get_coords()
+                        except ValueError as e:
+                            logging.error(e)
+                        else:
+                            logging.info("Target: %f, %f\tMotors: %f, %f" %
+                                         (tgt[0], tgt[1], mot[0], mot[1]))
                 elif n in (4, 5):
                     if value:
                         index = n - 4
-                        logging.debug("goto target %d" % (index + 1))
                         self.ptr.enable_laser(1)
                         off_tmr.cancel()
                         off_tmr = Timer(4, self.ptr.enable_laser, (0,))
                         off_tmr.start()
                         refs = self.ptr.get_refs()
                         if len(refs) > index:
+                            tgt = refs[index]
+                            logging.debug("Going to target %d: %s" %
+                                          (index + 1, tgt))
                             try:
-                                self.ptr.goto(refs[index])
+                                self.ptr.goto(tgt)
                             except ValueError as e:
                                 logging.error(e)
                 elif n == 8:
                     if value:
-                        logging.debug("set ref")
+                        logging.debug("Setting reference star: %s" %
+                                      self.ptr.target)
                         try:
                             self.ptr.set_ref()
                         except ValueError as e:
