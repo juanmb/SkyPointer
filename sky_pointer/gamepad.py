@@ -2,8 +2,11 @@
 
 import logging
 import struct
+import time
 from threading import Timer
 from pointer import Pointer
+
+LOG_FILE = 'skypointer.log'
 
 
 def sign(val):
@@ -14,6 +17,8 @@ class Gamepad:
     def __init__(self, pointer, device='/dev/input/js0'):
         self.__pipe = open(device, 'r')
         self.ptr = pointer
+        open(LOG_FILE, 'w').write("# timestamp\ttarget RA\ttarget dec\t"
+                                  "inst phi\tinst theta\r\n")
 
     def loop(self):
         run_tmr = off_tmr = Timer(0, None)
@@ -29,13 +34,11 @@ class Gamepad:
                 elif n == 1:
                     if value:
                         tgt = self.ptr.target
-                        try:
-                            mot = self.ptr.get_coords()
-                        except ValueError as e:
-                            logging.error(e)
-                        else:
-                            logging.info("Target: %f, %f\tMotors: %f, %f" %
-                                         (tgt[0], tgt[1], mot[0], mot[1]))
+                        inst = self.ptr.get_inst_coords()
+                        line = "%.3f\t%.6f\t%.6f\t%.6f\t%.6f" % \
+                            (time.time(), tgt[0], tgt[1], inst[0], inst[1])
+                        open(LOG_FILE, 'a').write(line+"\r\n")
+                        logging.info("Data written to %s:\n%s" % (LOG_FILE, line))
                 elif n in (4, 5):
                     if value:
                         index = n - 4
@@ -46,7 +49,7 @@ class Gamepad:
                         refs = self.ptr.get_refs()
                         if len(refs) > index:
                             tgt = refs[index]
-                            logging.debug("Going to target %d: %s" %
+                            logging.info("Going to target %d: %s" %
                                           (index + 1, tgt))
                             try:
                                 self.ptr.goto(tgt)
@@ -54,7 +57,7 @@ class Gamepad:
                                 logging.error(e)
                 elif n == 8:
                     if value:
-                        logging.debug("Setting reference star: %s" %
+                        logging.info("Setting reference star: %s" %
                                       self.ptr.target)
                         try:
                             self.ptr.set_ref()

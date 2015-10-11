@@ -126,8 +126,8 @@ class PointingModel(object):
 
     def inst_to_eq(self, inst, t=0):
         """ Convert instrumental to equatorial coordinates"""
-        if not self.__computed:
-            raise ValueError("Instrument coordinates not aligned!")
+        #if not self.__computed:
+            #raise ValueError("Instrument coordinates not aligned!")
 
         v = self.Tinv.dot(self.app_to_real_cosine(inst))
         # obtain AR and dec from direction cosine

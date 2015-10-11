@@ -55,10 +55,13 @@ class Server(object):
                         except ValueError as e:
                             logging.debug(e)
 
-                        logging.info("Target: %s" % tgt)
+                        logging.info("New target: %s" % tgt)
                     else:
                         self.sockets.remove(conn)
                         logging.debug("Client disconnected")
 
             for s in self.sockets[1:]:
-                s.send(encode_packet(self.ptr.get_coords()))
+                try:
+                    s.send(encode_packet(self.ptr.get_coords()))
+                except IOError as e:
+                    logging.error(e)

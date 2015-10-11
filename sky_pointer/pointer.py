@@ -20,11 +20,12 @@ def rad2steps(a, b):
 
 
 class Pointer:
-    def __init__(self, device='/dev/ttyUSB0', baud=115200):
-        self.__pm = PointingModel()
+    def __init__(self, device='/dev/ttyUSB0', baud=115200, z1=0., z2=0., z3=0.):
+        self.__pm = PointingModel(z1=z1, z2=z2, z3=z3)
         self.__hw = Hardware(device, baud)
         self.target = EqCoords(0, 0)
         self.hid = self.get_id()
+        self.__hw.home()
 
     def get_id(self):
         return self.__hw.get_id()

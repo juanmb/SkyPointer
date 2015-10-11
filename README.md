@@ -65,6 +65,34 @@ For development, it is strongly recommended to install this package into a
 Now you can send the equatorial coordinates of the selected object in
 Stellarium to the *SkyPointer* server by pressing `Ctrl+1`.
 
-## Usage
+## Configuration file
 
-TODO
+sky-pointer reads a configuration file that can be located at the following
+places:
+
+* `~/.config/sky-pointer`
+
+* `~/.sky-pointer/config`
+
+* `~/sky-pointerrc`
+
+* `/etc/sky-pointer/config`
+
+This is an example of a valid configuration file:
+
+```
+[sky-pointer]
+
+serial = /dev/ttyUSB0
+joystick = /dev/input/js0
+iface = 0.0.0.0
+port = 10000
+
+# mechanical errors (in radians)
+z1 = 0.0
+z2 = 0.0
+z3 = 0.0
+```
+
+The options defined in the configuration file will be overriden by the
+command-line arguments, except the mechanical errors.

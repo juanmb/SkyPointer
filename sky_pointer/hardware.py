@@ -42,6 +42,9 @@ class Hardware:
     def stop(self):
         self.__send_command('S')
 
+    def home(self):
+        self.__send_command('H')
+
     def get_pos(self):
         ret = self.__send_command('P', ret_len=12, ret_ok='P ')
         ha, el = ret.strip().split()[1:3]
