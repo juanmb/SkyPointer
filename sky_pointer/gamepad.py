@@ -42,15 +42,16 @@ class Gamepad:
                 elif n in (4, 5):
                     if value:
                         index = n - 4
-                        self.ptr.enable_laser(1)
-                        off_tmr.cancel()
-                        off_tmr = Timer(4, self.ptr.enable_laser, (0,))
-                        off_tmr.start()
                         refs = self.ptr.get_refs()
+
                         if len(refs) > index:
                             tgt = refs[index]
                             logging.info("Going to target %d: %s" %
                                           (index + 1, tgt))
+                            self.ptr.enable_laser(1)
+                            off_tmr.cancel()
+                            off_tmr = Timer(4, self.ptr.enable_laser, (0,))
+                            off_tmr.start()
                             try:
                                 self.ptr.goto(tgt)
                             except ValueError as e:

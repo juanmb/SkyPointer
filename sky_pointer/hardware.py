@@ -4,10 +4,13 @@ import time
 import serial
 import threading
 
-STEPS = 3200
+STEPS = 3200    # Number of microsteps per revolution of the motors
+NRETRIES = 3    # Number of retries when sending a serial command
 
 
 class Hardware:
+    """Serial communication with SkyPointer board."""
+
     def __init__(self, device='/dev/ttyUSB0', baud=115200):
         self.__lock = threading.Lock()
         self.__ser = serial.Serial(device, baud, timeout=1)
@@ -15,17 +18,18 @@ class Hardware:
         time.sleep(1.5)
 
     def __send_command(self, cmd, ret_len=3, ret_ok='OK'):
-        self.__lock.acquire()
-        try:
-            self.__ser.write(cmd+'\r')
-            ret = self.__ser.read(ret_len)
-        finally:
-            self.__lock.release()
+        """Send a serial command and check the response."""
+        with self.__lock:
+            for i in range(NRETRIES):
+                self.__ser.write(cmd + '\r')
+                ret = self.__ser.read(ret_len)
 
-        if not ret.startswith(ret_ok):
-            raise IOError('Serial command "%s" returned "%s"' % (cmd, ret))
+                if ret.startswith(ret_ok):
+                    return ret
+                print "command failed. retrying"
+                self.__ser.flushInput()
 
-        return ret
+        raise IOError('Serial command "%s" returned "%s"' % (cmd, ret))
 
     def get_id(self):
         return self.__send_command('I', ret_len=15, ret_ok='SkyPointer')
