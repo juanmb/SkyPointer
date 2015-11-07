@@ -9,7 +9,7 @@ from gamepad import Gamepad
 from rcfile import rcfile
 
 SERIAL_PORT = '/dev/ttyUSB0'
-JOYSTICK_DEV = '/dev/input/by-id/usb-Gasia_Co._Ltd_PS_R__Gamepad-joystick'
+JOYSTICK_DEV = '/dev/js0'
 
 
 def main():

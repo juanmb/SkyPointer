@@ -14,7 +14,12 @@ setup(
     description='Software for controlling a motorized sky-pointing laser',
     packages=['sky_pointer'],
     platforms='any',
-    entry_points={'console_scripts': ['sky-pointer = sky_pointer.main:main']},
+    entry_points={
+        'console_scripts': [
+            'sky-pointer = sky_pointer.main:main',
+            'calc-pointer-errors = sky_pointer.calc_pointer_errors:main',
+        ]
+    },
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Education',

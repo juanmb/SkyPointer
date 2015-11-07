@@ -86,7 +86,7 @@ This is an example of a valid configuration file:
 serial = /dev/ttyUSB0
 joystick = /dev/input/js0
 iface = 0.0.0.0
-port = 10000
+port = 10001
 
 # mechanical errors (in radians)
 z1 = 0.0
