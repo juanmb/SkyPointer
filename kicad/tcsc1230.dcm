@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP TCST1230
+D Transmissive Optical Sensor with Phototransistor Output
+K NPN DC Optocoupler
+F http://www.vishay.com/docs/83765/tcst1230.pdf
+$ENDCMP
+#
+#End Doc Library
