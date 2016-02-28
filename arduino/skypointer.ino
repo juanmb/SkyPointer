@@ -22,11 +22,6 @@ The library SkyPointer_MotorShield can be downloaded from:
 #define USTEPS 16
 #define TOTAL_USTEPS (STEPS*USTEPS)
 
-// Correction for mechanical errors
-#define Z1  0.00045725
-#define Z2 -0.00021926
-#define Z3 -0.06099543
-
 // Speed parameters
 #define DT 10000 // Timer1 interrupt period
 #define RPM 1   // Desired rotation speed in rpm
@@ -49,33 +44,6 @@ SkyPointer_MicroStepper *motor1 =MS.getMicroStepper(STEPS, 1);
 // Motor 2 on port 2, 200 steps/rev
 SkyPointer_MicroStepper *motor2 = MS.getMicroStepper(STEPS, 2);
 
-/****************************************************************************
- * Functions for writing/reading mechanical errors to/from EPRROM
- ***************************************************************************/
-void writeErrorToEEPROM (int n, double Z) {
-    // Writes to EEPROM the n-th error correction, where n = 1, 2 or 3
-    int32_t _z = (int32_t) (Z * 1e8);
-    for (int k = 0; k < 4; k++) {
-        EEPROM.write(4*(n-1) + k, (int) ((_z >> 8*k) & 0xFF));
-    }
-}
-
-void writeAllErrorsToEEPROM (double z1, double z2, double z3) {
-    double z[3] = {z1, z2, z3};
-    for (int k = 0; k < 3; k++) {
-        writeErrorToEEPROM (k+1, z[k]);
-    }
-}
-
-double readErrorFromEEPROM (int n) {
-    // Reads the n-th error stored in the EEPROM and converts it to double,
-    // where n = 1, 2 or 3
-    int32_t res = 0;
-    for (int k = 0; k < 4; k++) {        
-        res |= (int32_t) ((int32_t) (EEPROM.read(4*(n-1)+k)) << 8*k);
-    }
-    return (double) (res / 1e8);
-}
 /****************************************************************************/
 // Interruption routine
 void ISR_rotate() {
@@ -100,7 +68,7 @@ void ISR_rotate() {
       }
   #endif
 */
-  
+
   sei();  // Enable interrupts --> Serial, I2C (MotorShield)
 
   // MOTOR 1
@@ -139,7 +107,7 @@ void ISR_rotate() {
   if ((motor1->isTarget()) && (motor2->isTarget())) {
     Timer1.detachInterrupt();
   }
-  
+
   #ifdef DEBUG
     digitalWrite (blinkLed, LOW);   // Turn the l¡LED off in ISR exit
   #endif
@@ -218,45 +186,36 @@ void ProcessID() {
 }
 
 
-// Write errors to EEPROM
-void ProcessWriteEEPROM () {
-  // Reads (12) ints from Serial port and writes them to EEPROM, starting in
-  // address 0x00 and incrementing by 1 with each byte
-  uint8_t n = 0;         // Init address counter
-  char *a = sCmd.next(); // First element
-  while (a != NULL) {
-    EEPROM.write(n, atoi(a));
-    a = sCmd.next(); // Get next element
-    n++;             // Increment address counter
+// Write a calibration value (4 bytes) to EEPROM
+void ProcessWriteCalib () {
+  uint8_t n = atoi(sCmd.next());
+  if (n > 3) {
+      Serial.print("NK\r");
+      return;
+  }
+
+  char data[4];
+  sscanf(sCmd.next(), "%lx", (uint32_t *)data);
+  for (int i = 0; i < 4; i++) {
+    EEPROM.write(4*n + i, data[i]);
   }
   Serial.print("OK\r");
 }
 
 
-// Read errors from EEPROM
-void ProcessReadEEPROM () {
-  /* Reads 12 bytes from EEPROM, 4 by each error, and sends them via Serial port.
-
-  A string is generated in the form:
-    R b_0 b_1 b_2 ... b_10 b_11\r
-  where 'b_n' is the n-th byte.
-  The size of the buffer is then obtained:
-    R   --> 1 byte
-    b_x --> 3 bytes + y space
-    \r  --> 2 bites
-  So we need to store (1 + 12x4 + 2) bytes = 51 bytes    
-  */
-  char buf[51];
-  // Init the buffer with the respose code letter
-  sprintf (buf, "R");
-  // Read EEPROM positions
-  for (int k = 0; k < 12; k++) {
-    // Append to the buffer
-    sprintf(buf + strlen(buf), " %03d", EEPROM.read(k));
+// Read a calibration value (4 bytes) from EEPROM
+void ProcessReadCalib () {
+  uint8_t n = atoi(sCmd.next());
+  if (n > 3) {
+      Serial.print("NK\r");
+      return;
   }
-  // Append eol
-  sprintf (buf + strlen(buf), "\r");
-  // Send the buffer via Serial
+
+  char buf[12], data[4];
+  for (int i = 0; i < 4; i++) {
+    data[i] = EEPROM.read(4*n + i);
+  }
+  sprintf(buf, "R %08lx\r", *(uint32_t *)data);
   Serial.print(buf);
 }
 
@@ -273,19 +232,19 @@ void setup() {
     pinMode (blinkLed, OUTPUT);
     digitalWrite (blinkLed, LOW);   // Turn off the LED
   #endif
-  
+
   // Start the serial port
   Serial.begin(115200);
 
-  // Add the commands to the SerialComnnand object
+  // Add the commands to the SerialCommand object
   sCmd.addCommand("G", ProcessGoto);    // G pos1 pos2\r
   sCmd.addCommand("M", ProcessMove);    // M steps1 steps2\r
   sCmd.addCommand("S", ProcessStop);    // S\r
   sCmd.addCommand("P", ProcessGetPos);  // P\r
   sCmd.addCommand("L", ProcessLaser);   // L enable\r
   sCmd.addCommand("I", ProcessID);      // I\r
-  sCmd.addCommand("W", ProcessWriteEEPROM); // Write mechanical errors to EEPROM
-  sCmd.addCommand("R", ProcessReadEEPROM);  // Reads mechanical errors from EEPROM
+  sCmd.addCommand("W", ProcessWriteCalib); // Write calibration value to EEPROM
+  sCmd.addCommand("R", ProcessReadCalib);  // Read calibration value from EEPROM
   sCmd.addDefaultHandler(Unrecognized);	// Unknown commands
 
   // Configure interrupt speed (microseconds)
@@ -294,10 +253,7 @@ void setup() {
   // Start motor shield
   MS.begin();
   motor1->setSpeed(RPM);
-  motor2->setSpeed(RPM);  
- 
-  // Reset EEPROM
-  //writeAllErrorsToEEPROM((double) 0, (double) 0, (double) 0);
+  motor2->setSpeed(RPM);
 }
 
 void loop() {

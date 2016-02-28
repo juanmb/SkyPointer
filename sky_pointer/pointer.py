@@ -20,15 +20,26 @@ def rad2steps(a, b):
 
 
 class Pointer:
-    def __init__(self, device='/dev/ttyUSB0', baud=115200, z1=0., z2=0., z3=0.):
-        self.__pm = PointingModel(z1=z1, z2=z2, z3=z3)
+    def __init__(self, device='/dev/ttyUSB0', baud=115200):
         self.__hw = Hardware(device, baud)
+        z1, z2, z3 = self.get_calib()
+        self.__pm = PointingModel(z1=z1, z2=z2, z3=z3)
         self.target = EqCoords(0, 0)
         self.hid = self.get_id()
-        self.__hw.home()
+        #self.__hw.home()
 
     def get_id(self):
         return self.__hw.get_id()
+
+    def get_calib(self):
+        return [self.__hw.get_calib(i) for i in range(3)]
+
+    def set_calib(self, calib):
+        if len(calib) != 3:
+            raise ValueError("Wrong number of calibration values")
+
+        for i, v in enumerate(calib):
+            self.__hw.set_calib(i, v)
 
     def set_ref(self):
         self.__pm.set_ref(self.target, self.get_inst_coords())

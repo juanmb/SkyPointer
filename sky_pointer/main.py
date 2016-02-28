@@ -17,9 +17,6 @@ def main():
 
     # read options from rc file
     cfg = rcfile('sky-pointer')
-    z1 = float(cfg.get('z1', 0.0))
-    z2 = float(cfg.get('z2', 0.0))
-    z3 = float(cfg.get('z3', 0.0))
     port = int(cfg.get('port', 10001))
     iface = cfg.get('iface', '0.0.0.0')
     serial = cfg.get('serial', SERIAL_PORT)
@@ -38,7 +35,7 @@ def main():
                         help='Joystick device (default: %s)' % joystick)
     args = parser.parse_args()
 
-    ptr = Pointer(device=args.serial, z1=z1, z2=z2, z3=z3)
+    ptr = Pointer(args.serial)
     pad = Gamepad(ptr, args.joystick)
 
     server = Server(ptr, args.iface, args.port)

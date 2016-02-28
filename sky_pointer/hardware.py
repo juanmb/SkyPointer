@@ -2,6 +2,7 @@
 
 import time
 import serial
+import struct
 import threading
 
 STEPS = 3200    # Number of microsteps per revolution of the motors
@@ -29,7 +30,7 @@ class Hardware:
                 print "command failed. retrying"
                 self.__ser.flushInput()
 
-        raise IOError('Serial command "%s" returned "%s"' % (cmd, ret))
+        raise IOError('Serial command "%s" returned "%s"' % (cmd, ret.strip()))
 
     def get_id(self):
         return self.__send_command('I', ret_len=15, ret_ok='SkyPointer')
@@ -53,3 +54,12 @@ class Hardware:
         ret = self.__send_command('P', ret_len=12, ret_ok='P ')
         ha, el = ret.strip().split()[1:3]
         return int(ha), int(el)
+
+    def get_calib(self, n):
+        ret = self.__send_command('R %d' % n, ret_len=11, ret_ok='R ')
+        v = int(ret.strip().split()[1], 16)
+        return struct.unpack('!f', struct.pack('!I', v))[0]
+
+    def set_calib(self, n, val):
+        v = struct.unpack('!I', struct.pack('!f', val))[0]
+        self.__send_command('W %d %x' % (n, v))
