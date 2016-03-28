@@ -30,10 +30,11 @@ class EqCoords(Coords):
 
         dec_m, dec_s = divmod(abs(self.y*60*60*180/pi), 60)
         dec_d, dec_m = divmod(dec_m, 60)
-        dec_d = copysign(dec_d, self.y)
+        sign = '-' if self.y < 0 else ''
+        print dec_d
 
-        return 'RA: %02dh %02dm %.2fs\t' % (ra_h, ra_m, ra_s) + \
-               'dec: %02dd %02d\' %.1f"' % (dec_d, dec_m, dec_s)
+        return 'RA: %02d:%02d:%.2f\t' % (ra_h, ra_m, ra_s) + \
+            'dec: %s%02d:%02d:%.1f' % (sign, dec_d, dec_m, dec_s)
 
 
 if __name__ == '__main__':
@@ -47,3 +48,5 @@ if __name__ == '__main__':
     print c1[0], c1[1]
 
     print Coords(1, 2) == Coords(1, 2)
+
+    print EqCoords(pi/12, -1*pi/180)

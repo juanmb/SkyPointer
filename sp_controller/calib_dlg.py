@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'calib_dlg.ui'
 #
-# Created: Sun Feb 28 23:03:12 2016
-#      by: PyQt4 UI code generator 4.10.4
+# Created: Sat Mar 26 18:09:22 2016
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -28,6 +28,7 @@ class Ui_Dialog(object):
         Dialog.setObjectName(_fromUtf8("Dialog"))
         Dialog.setWindowModality(QtCore.Qt.WindowModal)
         Dialog.resize(194, 146)
+        Dialog.setModal(True)
         self.verticalLayout = QtGui.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.formLayout = QtGui.QFormLayout()
@@ -36,19 +37,31 @@ class Ui_Dialog(object):
         self.z1Label = QtGui.QLabel(Dialog)
         self.z1Label.setObjectName(_fromUtf8("z1Label"))
         self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.z1Label)
-        self.z1Value = QtGui.QLineEdit(Dialog)
-        self.z1Value.setObjectName(_fromUtf8("z1Value"))
-        self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.z1Value)
         self.z2Label = QtGui.QLabel(Dialog)
         self.z2Label.setObjectName(_fromUtf8("z2Label"))
         self.formLayout.setWidget(1, QtGui.QFormLayout.LabelRole, self.z2Label)
-        self.z2Value = QtGui.QLineEdit(Dialog)
-        self.z2Value.setObjectName(_fromUtf8("z2Value"))
-        self.formLayout.setWidget(1, QtGui.QFormLayout.FieldRole, self.z2Value)
         self.z3Label = QtGui.QLabel(Dialog)
         self.z3Label.setObjectName(_fromUtf8("z3Label"))
         self.formLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.z3Label)
-        self.z3Value = QtGui.QLineEdit(Dialog)
+        self.z1Value = QtGui.QDoubleSpinBox(Dialog)
+        self.z1Value.setDecimals(4)
+        self.z1Value.setMinimum(-1.0)
+        self.z1Value.setMaximum(1.0)
+        self.z1Value.setSingleStep(0.01)
+        self.z1Value.setObjectName(_fromUtf8("z1Value"))
+        self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.z1Value)
+        self.z2Value = QtGui.QDoubleSpinBox(Dialog)
+        self.z2Value.setDecimals(4)
+        self.z2Value.setMinimum(-1.0)
+        self.z2Value.setMaximum(1.0)
+        self.z2Value.setSingleStep(0.01)
+        self.z2Value.setObjectName(_fromUtf8("z2Value"))
+        self.formLayout.setWidget(1, QtGui.QFormLayout.FieldRole, self.z2Value)
+        self.z3Value = QtGui.QDoubleSpinBox(Dialog)
+        self.z3Value.setDecimals(4)
+        self.z3Value.setMinimum(-1.0)
+        self.z3Value.setMaximum(1.0)
+        self.z3Value.setSingleStep(0.01)
         self.z3Value.setObjectName(_fromUtf8("z3Value"))
         self.formLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.z3Value)
         self.verticalLayout.addLayout(self.formLayout)

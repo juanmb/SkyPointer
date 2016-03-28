@@ -22,8 +22,9 @@ def rad2steps(a, b):
 class Pointer:
     def __init__(self, device='/dev/ttyUSB0', baud=115200):
         self.__hw = Hardware(device, baud)
-        z1, z2, z3 = self.get_calib()
-        self.__pm = PointingModel(z1=z1, z2=z2, z3=z3)
+        self.calib = self.__get_calib()
+        self.__pm = PointingModel(z1=self.calib[0], z2=self.calib[1],
+                                  z3=self.calib[2])
         self.target = EqCoords(0, 0)
         self.hid = self.get_id()
         #self.__hw.home()
@@ -31,7 +32,7 @@ class Pointer:
     def get_id(self):
         return self.__hw.get_id()
 
-    def get_calib(self):
+    def __get_calib(self):
         return [self.__hw.get_calib(i) for i in range(3)]
 
     def set_calib(self, calib):
@@ -46,6 +47,9 @@ class Pointer:
 
     def get_refs(self):
         return self.__pm.eq_refs
+
+    def get_nrefs(self):
+        return self.__pm.get_nrefs()
 
     def steps(self, ha, el):
         self.__hw.move(ha, el)

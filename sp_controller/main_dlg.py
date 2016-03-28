@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'main_dlg.ui'
 #
-# Created: Sun Feb 28 23:00:47 2016
-#      by: PyQt4 UI code generator 4.10.4
+# Created: Sat Mar 26 20:03:42 2016
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -63,18 +63,20 @@ class Ui_spcontroller(object):
         self.calibrationLabel.setObjectName(_fromUtf8("calibrationLabel"))
         self.statusFormLayout.setWidget(1, QtGui.QFormLayout.LabelRole, self.calibrationLabel)
         self.statusCalibration = QtGui.QLabel(self.statuxBox)
+        self.statusCalibration.setText(_fromUtf8(""))
         self.statusCalibration.setObjectName(_fromUtf8("statusCalibration"))
         self.statusFormLayout.setWidget(1, QtGui.QFormLayout.FieldRole, self.statusCalibration)
-        self.syncedLabel = QtGui.QLabel(self.statuxBox)
-        self.syncedLabel.setObjectName(_fromUtf8("syncedLabel"))
-        self.statusFormLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.syncedLabel)
-        self.statusSynced = QtGui.QLabel(self.statuxBox)
+        self.alignedLabel = QtGui.QLabel(self.statuxBox)
+        self.alignedLabel.setObjectName(_fromUtf8("alignedLabel"))
+        self.statusFormLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.alignedLabel)
+        self.statusAligned = QtGui.QLabel(self.statuxBox)
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
-        self.statusSynced.setFont(font)
-        self.statusSynced.setObjectName(_fromUtf8("statusSynced"))
-        self.statusFormLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.statusSynced)
+        self.statusAligned.setFont(font)
+        self.statusAligned.setText(_fromUtf8(""))
+        self.statusAligned.setObjectName(_fromUtf8("statusAligned"))
+        self.statusFormLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.statusAligned)
         self.statusDevice = QtGui.QLabel(self.statuxBox)
         self.statusDevice.setObjectName(_fromUtf8("statusDevice"))
         self.statusFormLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.statusDevice)
@@ -143,11 +145,11 @@ class Ui_spcontroller(object):
         self.gotoButton.setAutoDefault(False)
         self.gotoButton.setObjectName(_fromUtf8("gotoButton"))
         self.verticalLayout_3.addWidget(self.gotoButton)
-        self.syncButton = QtGui.QPushButton(self.controlBox)
-        self.syncButton.setEnabled(False)
-        self.syncButton.setAutoDefault(False)
-        self.syncButton.setObjectName(_fromUtf8("syncButton"))
-        self.verticalLayout_3.addWidget(self.syncButton)
+        self.alignButton = QtGui.QPushButton(self.controlBox)
+        self.alignButton.setEnabled(False)
+        self.alignButton.setAutoDefault(False)
+        self.alignButton.setObjectName(_fromUtf8("alignButton"))
+        self.verticalLayout_3.addWidget(self.alignButton)
         self.horizontalLayout.addLayout(self.verticalLayout_3)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
@@ -292,9 +294,7 @@ class Ui_spcontroller(object):
         self.statuxBox.setTitle(_translate("spcontroller", "Status", None))
         self.deviceLabel.setText(_translate("spcontroller", "Device:", None))
         self.calibrationLabel.setText(_translate("spcontroller", "Calibration:", None))
-        self.statusCalibration.setText(_translate("spcontroller", "Not calibrated", None))
-        self.syncedLabel.setText(_translate("spcontroller", "Synced:", None))
-        self.statusSynced.setText(_translate("spcontroller", "No", None))
+        self.alignedLabel.setText(_translate("spcontroller", "Aligned:", None))
         self.statusDevice.setText(_translate("spcontroller", "Not connected", None))
         self.coordBox.setTitle(_translate("spcontroller", "Coordinates", None))
         self.targetLabel.setText(_translate("spcontroller", "Target:", None))
@@ -305,8 +305,8 @@ class Ui_spcontroller(object):
         self.laserButton.setShortcut(_translate("spcontroller", "L", None))
         self.gotoButton.setText(_translate("spcontroller", "Goto...", None))
         self.gotoButton.setShortcut(_translate("spcontroller", "G", None))
-        self.syncButton.setText(_translate("spcontroller", "Sync", None))
-        self.syncButton.setShortcut(_translate("spcontroller", "S", None))
+        self.alignButton.setText(_translate("spcontroller", "Align", None))
+        self.alignButton.setShortcut(_translate("spcontroller", "S", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.main), _translate("spcontroller", "&Main", None))
         self.serialPortLabel.setText(_translate("spcontroller", "Serial port:", None))
         self.joystickLabel.setText(_translate("spcontroller", "Joystick:", None))

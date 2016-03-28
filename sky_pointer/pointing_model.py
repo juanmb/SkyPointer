@@ -114,6 +114,9 @@ class PointingModel(object):
             self.__compute_matrix()
         self.__ref_count += 1
 
+    def get_nrefs(self):
+        return self.__ref_count
+
     def eq_to_inst(self, eq, t=0):
         """ Convert equatorial to instrumental coordinates"""
         if not self.__computed:

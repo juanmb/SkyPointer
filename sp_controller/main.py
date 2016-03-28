@@ -2,10 +2,15 @@ import sys
 from functools import partial
 import glob
 import serial
+from threading import Timer
 from PyQt4 import QtCore, QtGui
 from serial import SerialException
 from sky_pointer.pointer import Pointer
+from sky_pointer.coords import EqCoords
+from math import pi
 import main_dlg
+import calib_dlg
+import goto_dlg
 
 
 def list_serial_ports():
@@ -31,11 +36,37 @@ def list_serial_ports():
     return result
 
 
+class CalibDialog(QtGui.QDialog, calib_dlg.Ui_Dialog):
+    def __init__(self, parent=None, calib=(0, 0, 0)):
+        super(CalibDialog, self).__init__(parent)
+        self.setupUi(self)
+        self.z1Value.setValue(calib[0])
+        self.z2Value.setValue(calib[1])
+        self.z3Value.setValue(calib[2])
+
+    def getCalib(self):
+        return self.z1Value.value(), self.z2Value.value(), \
+            self.z3Value.value()
+
+class GotoDialog(QtGui.QDialog, goto_dlg.Ui_GotoDialog):
+    def __init__(self, parent=None):
+        super(GotoDialog, self).__init__(parent)
+        self.setupUi(self)
+
+    def getTarget(self):
+        ra_tgt = self.ra_h.value() + self.ra_min.value()/60. \
+            + self.ra_sec.value()/3600.
+        dec_tgt = self.dec_deg.value() + self.dec_min.value()/60. \
+            + self.dec_sec.value()/3600.
+        return EqCoords(ra_tgt*pi/12, dec_tgt*pi/180)
+
+
 class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
     def __init__(self, parent=None):
         super(MyApp, self).__init__(parent)
         self.setupUi(self)
         self.cfg = QtCore.QSettings('skypointer')
+        self.run_tmr = Timer(0, None)
 
         # allow using the arrows keys
         self.setChildrenFocusPolicy(QtCore.Qt.NoFocus)
@@ -51,6 +82,9 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         self.leftButton.released.connect(partial(self.onArrow, 'left', False))
         self.rightButton.pressed.connect(partial(self.onArrow, 'right', True))
         self.rightButton.released.connect(partial(self.onArrow, 'right', False))
+        self.gotoButton.clicked.connect(self.onGoto)
+        self.alignButton.clicked.connect(self.onAlign)
+        self.calibrateButton.clicked.connect(self.onCalibrate)
 
         for port in list_serial_ports():
             self.serialCombo.addItem(port)
@@ -82,12 +116,22 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
             self.ptr = None
         else:
             self.statusDevice.setText(self.ptr.get_id())
-            calib = self.ptr.get_calib()
-            self.statusCalibration.setText(' '.join([("%.4f" % c) for c in calib]))
+            self.update_calib()
 
-        self.statusSynced.setText('No')
+        self.statusAligned.setText('No')
         self.coordBox.setEnabled(self.ptr is not None)
         self.controlBox.setEnabled(self.ptr is not None)
+
+    def update_target(self):
+        if self.ptr:
+            tgt = self.ptr.target
+            self.coordTarget.setText(str(tgt))
+            self.alignButton.setEnabled(True)
+
+    def update_calib(self):
+        if self.ptr:
+            calib = self.ptr.calib
+            self.statusCalibration.setText(' '.join([("%.4f" % c) for c in calib]))
 
     def processKeyEvent(self, event, pressed):
         if event.isAutoRepeat():
@@ -128,17 +172,55 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
             self.ptr.enable_laser(self.laserButton.isChecked())
 
     def onArrow(self, key, pressed):
-        print key, pressed
-        az, el = 0, 0
-        if key == 'right':
-            az = 1
-        elif key == 'left':
-            az = -1
-        elif key == 'up':
-            el = 1
-        elif key == 'down':
-            el = -1
-        self.ptr.run(az, el)
+        if pressed:
+            az, el = 0, 0
+            if key == 'right':
+                az = 1
+            elif key == 'left':
+                az = -1
+            elif key == 'up':
+                el = 1
+            elif key == 'down':
+                el = -1
+
+            self.ptr.steps(az, el)
+            self.run_tmr.cancel()
+            self.run_tmr = Timer(.5, self.ptr.run, (az, el))
+            self.run_tmr.start()
+        else:
+            self.run_tmr.cancel()
+            self.ptr.stop()
+
+    def onCalibrate(self):
+        dlg = CalibDialog(self, calib=self.ptr.calib)
+        if dlg.exec_():
+            self.ptr.set_calib(dlg.getCalib())
+            self.update_calib()
+
+    def onGoto(self):
+        dlg = GotoDialog(self)
+        if dlg.exec_():
+            try:
+                self.ptr.goto(dlg.getTarget())
+            except ValueError:
+                print "Not aligned"
+            self.update_target()
+
+    def onAlign(self):
+        try:
+            self.ptr.set_ref()
+        except ValueError as e:
+            QtGui.QMessageBox.warning(self, "Alignment error", str(e))
+
+        npoints = self.ptr.get_nrefs()
+        if npoints == 0:
+            text = 'No'
+        if npoints == 1:
+            text = 'No (1 point)'
+        else:
+            text = 'Yes'
+
+        self.statusAligned.setText(text)
 
 
 def main():
