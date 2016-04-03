@@ -115,7 +115,7 @@ void ISR_rotate() {
     if (analogRead(PHOTO_PIN) < 512) {
       motor2->microstep(1, 0);
     } else {
-      motor2->setPosition(0);
+      motor2->setPos(0);
       home = false;
     }
   } else {
