@@ -3,10 +3,10 @@
 import logging
 import argparse
 import threading
-from server import Server
-from pointer import Pointer
-from gamepad import Gamepad
 from rcfile import rcfile
+from ..server import Server
+from ..pointer import Pointer
+from gamepad import Gamepad
 
 SERIAL_PORT = '/dev/ttyUSB0'
 JOYSTICK_DEV = '/dev/js0'

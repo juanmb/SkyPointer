@@ -1,6 +1,6 @@
 from math import pi
 from pointing_model import PointingModel
-from hardware import Hardware, STEPS
+from protocol import Protocol, STEPS
 from coords import Coords, EqCoords
 
 
@@ -21,7 +21,7 @@ def rad2steps(a, b):
 
 class Pointer:
     def __init__(self, device='/dev/ttyUSB0', baud=115200):
-        self.__hw = Hardware(device, baud)
+        self.__hw = Protocol(device, baud)
         self.calib = self.__get_calib()
         self.__pm = PointingModel(z1=self.calib[0], z2=self.calib[1],
                                   z3=self.calib[2])
@@ -76,6 +76,9 @@ class Pointer:
 
     def get_inst_coords(self):
         return Coords(*steps2rad(*self.__hw.get_pos()))
+
+    def get_motor_pos(self):
+        return self.__hw.get_pos()
 
     def goto(self, eq):
         self.target = eq

@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'calib_dlg.ui'
 #
-# Created: Sat Mar 26 18:09:22 2016
-#      by: PyQt4 UI code generator 4.11.3
+# Created: Mon Apr  4 00:04:06 2016
+#      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -29,8 +29,8 @@ class Ui_Dialog(object):
         Dialog.setWindowModality(QtCore.Qt.WindowModal)
         Dialog.resize(194, 146)
         Dialog.setModal(True)
-        self.verticalLayout = QtGui.QVBoxLayout(Dialog)
-        self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        self.gridLayout = QtGui.QGridLayout(Dialog)
+        self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.formLayout = QtGui.QFormLayout()
         self.formLayout.setHorizontalSpacing(12)
         self.formLayout.setObjectName(_fromUtf8("formLayout"))
@@ -64,17 +64,20 @@ class Ui_Dialog(object):
         self.z3Value.setSingleStep(0.01)
         self.z3Value.setObjectName(_fromUtf8("z3Value"))
         self.formLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.z3Value)
-        self.verticalLayout.addLayout(self.formLayout)
+        self.gridLayout.addLayout(self.formLayout, 0, 0, 1, 1)
         self.buttonBox = QtGui.QDialogButtonBox(Dialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
-        self.verticalLayout.addWidget(self.buttonBox)
+        self.gridLayout.addWidget(self.buttonBox, 1, 0, 1, 1)
 
         self.retranslateUi(Dialog)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), Dialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+        Dialog.setTabOrder(self.z1Value, self.z2Value)
+        Dialog.setTabOrder(self.z2Value, self.z3Value)
+        Dialog.setTabOrder(self.z3Value, self.buttonBox)
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(_translate("Dialog", "Calibration", None))

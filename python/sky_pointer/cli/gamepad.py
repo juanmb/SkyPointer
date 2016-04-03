@@ -4,7 +4,7 @@ import logging
 import struct
 import time
 from threading import Timer
-from pointer import Pointer
+from ..pointer import Pointer
 
 LOG_FILE = 'skypointer.log'
 

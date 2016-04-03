@@ -5,13 +5,13 @@ import serial
 from threading import Timer
 from PyQt4 import QtCore, QtGui
 from serial import SerialException
-from sky_pointer.pointer import Pointer
-from sky_pointer.coords import EqCoords
 from math import pi, copysign
+from ..pointer import Pointer
+from ..coords import EqCoords
+from bright_stars import bright_stars
 import main_dlg
 import calib_dlg
 import goto_dlg
-from bright_stars import bright_stars
 
 
 def list_serial_ports():
@@ -209,9 +209,9 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
     def onArrow(self, key, pressed):
         if pressed:
             az, el = 0, 0
-            if key == 'right':
+            if key == 'left':
                 az = 1
-            elif key == 'left':
+            elif key == 'right':
                 az = -1
             elif key == 'up':
                 el = 1

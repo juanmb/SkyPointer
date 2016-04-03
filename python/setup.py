@@ -16,8 +16,11 @@ setup(
     platforms='any',
     entry_points={
         'console_scripts': [
-            'sky-pointer = sky_pointer.main:main',
+            'skypointer = sky_pointer.cli.main:main',
             'calc-pointer-errors = sky_pointer.calc_pointer_errors:main',
+        ],
+        'gui_scripts': [
+            'skypointer-gui = sky_pointer.gui.main:main',
         ]
     },
     classifiers=[

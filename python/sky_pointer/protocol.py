@@ -9,7 +9,7 @@ STEPS = 3200    # Number of microsteps per revolution of the motors
 NRETRIES = 3    # Number of retries when sending a serial command
 
 
-class Hardware:
+class Protocol:
     """Serial communication with SkyPointer board."""
 
     def __init__(self, device='/dev/ttyUSB0', baud=115200):
@@ -44,11 +44,14 @@ class Hardware:
     def move(self, ha, el):
         self.__send_command('M %d %d' % (ha, el))
 
+    def home(self):
+        self.__send_command('H')
+
     def stop(self):
         self.__send_command('S')
 
-    def home(self):
-        self.__send_command('H')
+    def quit(self):
+        self.__send_command('Q')
 
     def get_pos(self):
         ret = self.__send_command('P', ret_len=12, ret_ok='P ')
@@ -66,8 +69,5 @@ class Hardware:
         self.__send_command('W %d %x' % (n, v))
 
     def close(self):
-        # reset the Arduino before closing the port
-        self.__ser.setDTR(False)
-        time.sleep(0.05)
-        self.__ser.setDTR(True)
+        self.quit()
         self.__ser.close()

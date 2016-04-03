@@ -24,19 +24,29 @@ The library SkyPointer_MotorShield can be downloaded from:
 
 // Speed parameters
 #define DT 10000 // Timer1 interrupt period
-#define RPM 1   // Desired rotation speed in rpm
+//#define RPM 1   // Desired rotation speed in rpm
 
+// Define pins
 #define LASER_PIN 13
 #define PHOTO_PIN A0
 
+// Define how long the laser stays on when the target has been reached
+#define LASER_T_ON 4000000  // 4 seconds
 
-#define DEBUG 1
-// Pin for debug
-#ifdef DEBUG
+//#define DEBUG_ISR 1  // Variable for Interruption debug
+// Pin for DEBUG_ISR
+#ifdef DEBUG_ISR
   int blinkLed = 12;
 #endif
 
-// Definition of the SerialCommand object, with delimiter ":"
+#define DEBUG_L 1      // Variable for Laser debug
+#ifndef DEBUG_ISR      // Check that ISR debug is off
+#ifdef DEBUG_L
+  int laser_dbg = 12;
+#endif
+#endif
+
+// Definition of the SerialCommand object
 SerialCommand sCmd;
 // Definition of the motor shield
 SkyPointer_MotorShield MS = SkyPointer_MotorShield();
@@ -48,9 +58,23 @@ SkyPointer_MicroStepper *motor2 = MS.getMicroStepper(STEPS, 2);
 int home = false;
 
 /****************************************************************************/
+// Timing routine
+void ISR_timer(){
+  // Check if the time the laser has been pointing to the object is equal to
+  // the desired ON time
+  uint32_t t_on = MS.getTimeOn(); // Get the stored value for laser_t_on
+  if (t_on >= LASER_T_ON){
+    digitalWrite(LASER_PIN, LOW); // Turn off the laser
+    Timer1.detachInterrupt();     // Detach interruption
+  }
+  MS.setTimeOn(t_on + uint32_t(DT));// Increment with the current time
+
+}
+
+
 // Interruption routine
 void ISR_rotate() {
-  #ifdef DEBUG
+  #ifdef DEBUG_ISR
     // Turns the LED on when entering the ISR
     // Measures the duration of the interruption routine
     digitalWrite (blinkLed, HIGH);
@@ -59,18 +83,9 @@ void ISR_rotate() {
   uint16_t pos, sim_pos, tg;
   uint8_t dir;
 
-/*  // Toggles LED status on each ISR callback
-  #ifdef DEBUG
-      bool status;
-      status = digitalRead(blinkLed);
-      if (status == HIGH) {
-        digitalWrite(blinkLed, LOW);
-      }
-      else {
-        digitalWrite(blinkLed, HIGH);
-      }
-  #endif
-*/
+  // Turn on the laser
+  digitalWrite(LASER_PIN, HIGH);
+
 
   sei();  // Enable interrupts --> Serial, I2C (MotorShield)
 
@@ -115,22 +130,29 @@ void ISR_rotate() {
   }
 
   // Check if target is reached
-  // This needs to be changed to invoke a new function to be created.
-  // This function must turn the laser on.
   if ((motor1->isTarget()) && (motor2->isTarget())) {
-    Timer1.detachInterrupt();
+    // If both motors are in the target position...
+    Timer1.detachInterrupt();	// Stop Timer1 interruption
+    // TURN OFF THE LASER
+    //digitalWrite(LASER_PIN, LOW);
+    MS.setTimeOn(uint32_t(0));          // Set timer to current time
+    Timer1.attachInterrupt(ISR_timer); // Attach temporization routine
+
+    // Must check a global variable that contains the status of the laser, ON
+    // or OFF, so the program cannot turn it off if it has been turned on by
+    // choice. This variable is not yet defined.
   }
 
-  #ifdef DEBUG
-    digitalWrite (blinkLed, LOW);   // Turn the l¡LED off in ISR exit
+  #ifdef DEBUG_ISR
+    digitalWrite (blinkLed, LOW);   // Turn the LED off in ISR exit
   #endif
 }
 
-/****************************************************************************
- * Functions for processing the commands received
- ***************************************************************************/
+/*******************************************************************************
+ * Functions for processing the commands received via serial port
+ ******************************************************************************/
 
-// Update the target positions of both motors
+// Update the target positions for both motors
 void ProcessGoto() {
   uint16_t tgt1, tgt2;
 
@@ -141,7 +163,7 @@ void ProcessGoto() {
   motor2 -> setTarget(tgt2);
 
   Serial.print("OK\r");
-  Timer1.attachInterrupt(ISR_rotate);  // Enable TimerOne interrupt
+  Timer1.attachInterrupt(ISR_rotate);  // Enable TimerOne interruption
 }
 
 
@@ -156,7 +178,7 @@ void ProcessMove() {
   motor2 -> setTarget(tgt2);
 
   Serial.print("OK\r");
-  Timer1.attachInterrupt(ISR_rotate);  // Enable TimerOne interrupt
+  Timer1.attachInterrupt(ISR_rotate);  // Enable TimerOne interruption
 }
 
 
@@ -166,7 +188,7 @@ void ProcessStop() {
   motor2 -> setTarget(motor2->getPosition());
 
   Serial.print("OK\r");
-  Timer1.attachInterrupt(ISR_rotate);  // Enable TimerOne interrupt
+  Timer1.attachInterrupt(ISR_rotate);  // Enable TimerOne interruption
 }
 
 
@@ -174,6 +196,7 @@ void ProcessStop() {
 void ProcessHome() {
   home = true;
   Serial.print("OK\r");
+  Timer1.attachInterrupt(ISR_rotate);  // Enable TimerOne interruption
 }
 
 
@@ -196,6 +219,15 @@ void ProcessLaser() {
 
   enable = atoi(sCmd.next()) != 0;
   digitalWrite(LASER_PIN, enable);
+  Serial.print("OK\r");
+}
+
+
+// Release motors and shut down laser
+void ProcessQuit() {
+  motor1->release();
+  motor2->release();
+  digitalWrite(LASER_PIN, 0);
   Serial.print("OK\r");
 }
 
@@ -247,8 +279,10 @@ void Unrecognized() {
 /****************************************************************************/
 
 void setup() {
+  // Configure laser pin and set to LOW
   pinMode(LASER_PIN, OUTPUT);
-  #ifdef DEBUG
+  digitalWrite(LASER_PIN, LOW);
+  #ifdef DEBUG_ISR
     pinMode (blinkLed, OUTPUT);
     digitalWrite (blinkLed, LOW);   // Turn off the LED
   #endif
@@ -266,6 +300,7 @@ void setup() {
   sCmd.addCommand("I", ProcessID);      // I\r
   sCmd.addCommand("W", ProcessWriteCalib); // Write calibration value to EEPROM
   sCmd.addCommand("R", ProcessReadCalib);  // Read calibration value from EEPROM
+  sCmd.addCommand("Q", ProcessQuit);    // Release motors and shut down laser
   sCmd.addDefaultHandler(Unrecognized);	// Unknown commands
 
   // Configure interrupt speed (microseconds)
@@ -273,8 +308,8 @@ void setup() {
 
   // Start motor shield
   MS.begin();
-  motor1->setSpeed(RPM);
-  motor2->setSpeed(RPM);
+  //motor1->setSpeed(RPM);
+  //motor2->setSpeed(RPM);
 }
 
 void loop() {
