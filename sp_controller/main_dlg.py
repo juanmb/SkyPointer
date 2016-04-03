@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'main_dlg.ui'
 #
-# Created: Sat Mar 26 20:03:42 2016
-#      by: PyQt4 UI code generator 4.11.3
+# Created: Sat Apr  2 18:50:40 2016
+#      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -212,23 +212,24 @@ class Ui_spcontroller(object):
         self.joystickLabel.setObjectName(_fromUtf8("joystickLabel"))
         self.configFormLayout.setWidget(1, QtGui.QFormLayout.LabelRole, self.joystickLabel)
         self.joystickCombo = QtGui.QComboBox(self.config)
+        self.joystickCombo.setEnabled(False)
         self.joystickCombo.setObjectName(_fromUtf8("joystickCombo"))
         self.joystickCombo.addItem(_fromUtf8(""))
         self.configFormLayout.setWidget(1, QtGui.QFormLayout.FieldRole, self.joystickCombo)
+        self.enableServerLabel = QtGui.QLabel(self.config)
+        self.enableServerLabel.setObjectName(_fromUtf8("enableServerLabel"))
+        self.configFormLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.enableServerLabel)
+        self.enableServer = QtGui.QCheckBox(self.config)
+        self.enableServer.setObjectName(_fromUtf8("enableServer"))
+        self.configFormLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.enableServer)
         self.serverPortLabel = QtGui.QLabel(self.config)
         self.serverPortLabel.setObjectName(_fromUtf8("serverPortLabel"))
-        self.configFormLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.serverPortLabel)
+        self.configFormLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.serverPortLabel)
         self.serverPort = QtGui.QSpinBox(self.config)
         self.serverPort.setMinimum(10000)
         self.serverPort.setMaximum(11000)
         self.serverPort.setObjectName(_fromUtf8("serverPort"))
-        self.configFormLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.serverPort)
-        self.enableServerLabel = QtGui.QLabel(self.config)
-        self.enableServerLabel.setObjectName(_fromUtf8("enableServerLabel"))
-        self.configFormLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.enableServerLabel)
-        self.enableServer = QtGui.QCheckBox(self.config)
-        self.enableServer.setObjectName(_fromUtf8("enableServer"))
-        self.configFormLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.enableServer)
+        self.configFormLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.serverPort)
         self.localHostOnlyLabel = QtGui.QLabel(self.config)
         self.localHostOnlyLabel.setObjectName(_fromUtf8("localHostOnlyLabel"))
         self.configFormLayout.setWidget(3, QtGui.QFormLayout.LabelRole, self.localHostOnlyLabel)
@@ -303,7 +304,7 @@ class Ui_spcontroller(object):
         self.controlBox.setTitle(_translate("spcontroller", "Control", None))
         self.laserButton.setText(_translate("spcontroller", "Laser", None))
         self.laserButton.setShortcut(_translate("spcontroller", "L", None))
-        self.gotoButton.setText(_translate("spcontroller", "Goto...", None))
+        self.gotoButton.setText(_translate("spcontroller", "Go to...", None))
         self.gotoButton.setShortcut(_translate("spcontroller", "G", None))
         self.alignButton.setText(_translate("spcontroller", "Align", None))
         self.alignButton.setShortcut(_translate("spcontroller", "S", None))
@@ -311,8 +312,8 @@ class Ui_spcontroller(object):
         self.serialPortLabel.setText(_translate("spcontroller", "Serial port:", None))
         self.joystickLabel.setText(_translate("spcontroller", "Joystick:", None))
         self.joystickCombo.setItemText(0, _translate("spcontroller", "None", None))
-        self.serverPortLabel.setText(_translate("spcontroller", "Server port:", None))
         self.enableServerLabel.setText(_translate("spcontroller", "Enable server", None))
+        self.serverPortLabel.setText(_translate("spcontroller", "Server port:", None))
         self.localHostOnlyLabel.setText(_translate("spcontroller", "Local host only", None))
         self.calibrateButton.setText(_translate("spcontroller", "Calibrate...", None))
         self.applyButton.setText(_translate("spcontroller", "Apply", None))

@@ -58,8 +58,16 @@ class Hardware:
     def get_calib(self, n):
         ret = self.__send_command('R %d' % n, ret_len=11, ret_ok='R ')
         v = int(ret.strip().split()[1], 16)
-        return struct.unpack('!f', struct.pack('!I', v))[0]
+        cal = struct.unpack('!f', struct.pack('!I', v))[0]
+        return cal if abs(cal) < 1. else 0.0
 
     def set_calib(self, n, val):
         v = struct.unpack('!I', struct.pack('!f', val))[0]
         self.__send_command('W %d %x' % (n, v))
+
+    def close(self):
+        # reset the Arduino before closing the port
+        self.__ser.setDTR(False)
+        time.sleep(0.05)
+        self.__ser.setDTR(True)
+        self.__ser.close()

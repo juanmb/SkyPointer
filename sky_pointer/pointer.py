@@ -27,10 +27,13 @@ class Pointer:
                                   z3=self.calib[2])
         self.target = EqCoords(0, 0)
         self.hid = self.get_id()
-        #self.__hw.home()
+        self.home()
 
     def get_id(self):
         return self.__hw.get_id()
+
+    def home(self):
+        return self.__hw.home()
 
     def __get_calib(self):
         return [self.__hw.get_calib(i) for i in range(3)]
@@ -77,3 +80,6 @@ class Pointer:
     def goto(self, eq):
         self.target = eq
         self.__hw.goto(*rad2steps(*self.__pm.eq_to_inst(eq)))
+
+    def close(self):
+        self.__hw.close()

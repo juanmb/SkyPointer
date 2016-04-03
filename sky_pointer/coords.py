@@ -1,4 +1,4 @@
-from math import pi, copysign
+from math import pi, copysign, modf
 
 
 class Coords(object):
@@ -23,22 +23,29 @@ class Coords(object):
 
 
 class EqCoords(Coords):
+    def fields(self):
+        hfrac, ra_h = modf(abs(self.x*12/pi))
+        mfrac, ra_m = modf(hfrac*60)
+        ra_s = mfrac*60.
+
+        dfrac, dec_d = modf(abs(self.y*180/pi))
+        mfrac, dec_m = modf(dfrac*60)
+        dec_s = mfrac*60.
+
+        return ra_h % 24, ra_m, ra_s, copysign(dec_d, self.y), dec_m, dec_s
+
     def __str__(self):
-        ra_m, ra_s = divmod(abs(self.x*60*60*12/pi), 60)
-        ra_h, ra_m = divmod(ra_m, 60)
-        ra_h = ra_h % 24
+        return 'RA: %02d:%02d:%02.0f\tdec: %02d:%02d:%02.0f' % self.fields()
 
-        dec_m, dec_s = divmod(abs(self.y*60*60*180/pi), 60)
-        dec_d, dec_m = divmod(dec_m, 60)
-        sign = '-' if self.y < 0 else ''
-        print dec_d
-
-        return 'RA: %02d:%02d:%.2f\t' % (ra_h, ra_m, ra_s) + \
-            'dec: %s%02d:%02d:%.1f' % (sign, dec_d, dec_m, dec_s)
+    @staticmethod
+    def from_fields(ra_h, ra_m, ra_s, dec_d, dec_m, dec_s):
+        ra = copysign(abs(ra_h) + ra_m/60. + ra_s/3600., ra_h)
+        dec = copysign(abs(dec_d) + dec_m/60. + dec_s/3600., dec_d)
+        return EqCoords(ra*pi/12, dec*pi/180)
 
 
 if __name__ == '__main__':
-    eq1 = EqCoords(2*pi+0.034, -pi/2+0.01)
+    eq1 = EqCoords(-pi - pi/12./60, pi/2 + pi/180./60*2)
     print eq1
     print eq1[0], eq1[1]
     print

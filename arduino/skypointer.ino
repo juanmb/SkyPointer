@@ -27,6 +27,7 @@ The library SkyPointer_MotorShield can be downloaded from:
 #define RPM 1   // Desired rotation speed in rpm
 
 #define LASER_PIN 13
+#define PHOTO_PIN A0
 
 
 #define DEBUG 1
@@ -43,6 +44,8 @@ SkyPointer_MotorShield MS = SkyPointer_MotorShield();
 SkyPointer_MicroStepper *motor1 =MS.getMicroStepper(STEPS, 1);
 // Motor 2 on port 2, 200 steps/rev
 SkyPointer_MicroStepper *motor2 = MS.getMicroStepper(STEPS, 2);
+
+int home = false;
 
 /****************************************************************************/
 // Interruption routine
@@ -92,13 +95,23 @@ void ISR_rotate() {
   sim_pos = (pos + TOTAL_USTEPS/2) % TOTAL_USTEPS;
   tg = motor2->target;
 
-  if (!motor2->isTarget()) {  // Check target has not been reached
-    if (pos < TOTAL_USTEPS/2) {
-      dir = ((tg > pos) && (tg < sim_pos)) ? FORWARD : BACKWARD;
+  if (home) {
+    // if homing, move motor2 until the photodiode gets interrupted
+    if (analogRead(PHOTO_PIN) < 512) {
+      motor2->microstep(1, 0);
     } else {
-      dir = ((tg > pos) || (tg < sim_pos)) ? FORWARD : BACKWARD;
+      motor2->setPosition(0);
+      home = false;
     }
-    motor2->microstep(1, dir);
+  } else {
+    if (!motor2->isTarget()) {  // Check target has not been reached
+      if (pos < TOTAL_USTEPS/2) {
+        dir = ((tg > pos) && (tg < sim_pos)) ? FORWARD : BACKWARD;
+      } else {
+        dir = ((tg > pos) || (tg < sim_pos)) ? FORWARD : BACKWARD;
+      }
+      motor2->microstep(1, dir);
+    }
   }
 
   // Check if target is reached
@@ -154,6 +167,13 @@ void ProcessStop() {
 
   Serial.print("OK\r");
   Timer1.attachInterrupt(ISR_rotate);  // Enable TimerOne interrupt
+}
+
+
+// Go to home position (elevation motor only)
+void ProcessHome() {
+  home = true;
+  Serial.print("OK\r");
 }
 
 
@@ -241,6 +261,7 @@ void setup() {
   sCmd.addCommand("M", ProcessMove);    // M steps1 steps2\r
   sCmd.addCommand("S", ProcessStop);    // S\r
   sCmd.addCommand("P", ProcessGetPos);  // P\r
+  sCmd.addCommand("H", ProcessHome);    // H\r
   sCmd.addCommand("L", ProcessLaser);   // L enable\r
   sCmd.addCommand("I", ProcessID);      // I\r
   sCmd.addCommand("W", ProcessWriteCalib); // Write calibration value to EEPROM

@@ -7,10 +7,11 @@ from PyQt4 import QtCore, QtGui
 from serial import SerialException
 from sky_pointer.pointer import Pointer
 from sky_pointer.coords import EqCoords
-from math import pi
+from math import pi, copysign
 import main_dlg
 import calib_dlg
 import goto_dlg
+from bright_stars import bright_stars
 
 
 def list_serial_ports():
@@ -48,17 +49,47 @@ class CalibDialog(QtGui.QDialog, calib_dlg.Ui_Dialog):
         return self.z1Value.value(), self.z2Value.value(), \
             self.z3Value.value()
 
+
 class GotoDialog(QtGui.QDialog, goto_dlg.Ui_GotoDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, target=EqCoords(0,0)):
         super(GotoDialog, self).__init__(parent)
         self.setupUi(self)
 
+        by_bayer = sorted(bright_stars, key=lambda l: l[0])
+        stars_by_bayer = [''] + [star[0] for star in by_bayer if star[0]]
+        self.star_bayer_combo.addItems(stars_by_bayer)
+
+        by_name = sorted(bright_stars, key=lambda l: l[1])
+        stars_by_name = [''] + [star[1] for star in by_name if star[1]]
+        self.star_name_combo.addItems(stars_by_name)
+
+        self.fillCoords(target)
+
+        self.star_bayer_combo.activated.connect(self.onSelectBayer)
+        self.star_name_combo.activated.connect(self.onSelectName)
+
+    def fillCoords(self, coords):
+        # fill the values of the coordinate fields
+        controls = self.ra_h, self.ra_m, self.ra_s, self.dec_d, self.dec_m, self.dec_s
+        for control, v in zip(controls, coords.fields()):
+            control.setValue(v)
+
+    def onSelectBayer(self):
+        self.star_name_combo.setCurrentIndex(0)
+        name = self.star_bayer_combo.currentText()
+        star = [star for star in bright_stars if star[0] == name][0]
+        self.fillCoords(EqCoords(star[2], star[3]))
+
+    def onSelectName(self):
+        self.star_bayer_combo.setCurrentIndex(0)
+        name = self.star_name_combo.currentText()
+        star = [star for star in bright_stars if star[1] == name][0]
+        self.fillCoords(EqCoords(star[2], star[3]))
+
     def getTarget(self):
-        ra_tgt = self.ra_h.value() + self.ra_min.value()/60. \
-            + self.ra_sec.value()/3600.
-        dec_tgt = self.dec_deg.value() + self.dec_min.value()/60. \
-            + self.dec_sec.value()/3600.
-        return EqCoords(ra_tgt*pi/12, dec_tgt*pi/180)
+        return EqCoords.from_fields(self.ra_h.value(), self.ra_m.value(),
+                                    self.ra_s.value(), self.dec_d.value(),
+                                    self.dec_m.value(), self.dec_s.value())
 
 
 class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
@@ -108,6 +139,9 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         set_policy(self)
 
     def connect_pointer(self):
+        if hasattr(self, 'ptr'):
+            self.ptr.close()
+
         try:
             self.ptr = Pointer(str(self.cfg.value('serial_port', type=str)))
         except (SerialException, IOError) as e:
@@ -163,8 +197,9 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         self.cfg.setValue('enable_server', bool(self.enableServer.checkState()))
         self.cfg.setValue('localhost_only', bool(self.localHostOnly.checkState()))
         self.cfg.setValue('server_port', self.serverPort.value())
-        print "Settings saved in", self.cfg.fileName()
 
+        QtGui.QMessageBox.information(self, "Applied",
+                                      "Configuration has been saved in\n%s" % self.cfg.fileName())
         self.connect_pointer()
 
     def onLaser(self):
@@ -196,9 +231,12 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         if dlg.exec_():
             self.ptr.set_calib(dlg.getCalib())
             self.update_calib()
+            QtGui.QMessageBox.information(self, "Calibrated",
+                                          "Calibration has been uploaded to the device")
+            self.connect_pointer()
 
     def onGoto(self):
-        dlg = GotoDialog(self)
+        dlg = GotoDialog(self, self.ptr.target)
         if dlg.exec_():
             try:
                 self.ptr.goto(dlg.getTarget())
@@ -218,9 +256,12 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         if npoints == 1:
             text = 'No (1 point)'
         else:
-            text = 'Yes'
+            text = 'Yes (2 points)'
 
         self.statusAligned.setText(text)
+
+    def closeEvent(self,event):
+        self.ptr.close()
 
 
 def main():
