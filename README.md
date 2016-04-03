@@ -1,54 +1,108 @@
 # SkyPointer
 
-Software for controlling a motorized sky-pointing laser.
+## Introduction
 
-**This project is in a very early stage!!!**
+A laser pointer controlled by software.
 
-## How it works
-
-The following diagram shows the intended setup:
+The following diagram shows the current setup:
 
 ```
-                          THIS PROJECT                            
  +------------+  TCP     +------------+            +------------+ 
  |            |  socket  | SkyPointer | USB-serial | SkyPointer | 
- | Stellarium +--------->| server     +----------->| hardware   | 
- |            |          |            |            | (Arduino)  | 
+ | Stellarium +--------->| controller +----------->| hardware   | 
+ |            |          |  (Python)  |            | (Arduino)  | 
  +------------+          +------------+            +------------+ 
 ```
 
-This project implements a TCP server that receives messages from [Stellarium](http://www.stellarium.org/)
-using its [client-server protocol](http://www.stellarium.org/wiki/index.php/Telescope_Control_%28client-server%29).
+## Hardware
 
-## Installation
+An Arduino Uno board controls two stepper motors (azimuth and elevation) using an
+[Adafruit Motor Shield V2](https://www.adafruit.com/products/1438).
 
-Using pip:
+
+## Software
+
+The software controller is coded in Python.
+This project implements a TCP server that receives messages from
+[Stellarium](http://www.stellarium.org/) using its
+[client-server protocol](http://www.stellarium.org/wiki/index.php/Telescope_Control_%28client-server%29).
+
+
+## Installing
+
+### Installing the Arduino firmware
+
+* Download the code with `git clone https://github.com/juanmb/SkyPointer.git`
+* Install the [TimerOne](https://github.com/PaulStoffregen/TimerOne) library
+* Install the [ArduinoSerialCommand](https://github.com/scogswell/ArduinoSerialCommand)
+  library
+* Copy the `arduino/skypointer_motorshield` folder to your Arduino `libraries`
+  directory (or make a symlink to it)
+* Open the file `arduino/skypointer/skypointer.ino` in the Arduino IDE, compile
+  it and upload it to your Arduino Uno board
+
+
+### Installing the Python package in Debian/Ubuntu
+
+Install required Python dependencies
+
+```
+$ sudo apt-get install pyqt4-dev-tools python-numpy
+```
+
+Now you can install the *skypointer* package with pip
 
 ```
 $ pip install skypointer
 ```
 
-Calling `setup.py` directly:
+Or downloading the source and calling `setup.py` directly from the `python` folder
 
 ```
+$ git clone https://github.com/juanmb/SkyPointer.git
+$ cd python
 $ python setup.py install
-```
-
-Installation in *development mode* (recommended for developers):
-
-```
-$ python setup.py develop
 ```
 
 For development, it is strongly recommended to install this package into a
 [virtual environment](https://virtualenv.pypa.io/en/latest/).
 
-## Configuration
 
-* Call `sky-pointer` with the appropiate arguments from the command line
-  (Use `-h` for getting help about the available options).
+### Installing the Python package in Windows
 
-* Start Stellarium
+Using [Anaconda](https://www.continuum.io/downloads):
+
+```
+conda install numpy pyserial pyqt
+```
+
+Now you can install the skypointer package using pip
+
+```
+$ pip install skypointer
+```
+
+Or downloading the source and calling `setup.py` directly from the `python` folder
+
+```
+$ git clone https://github.com/juanmb/SkyPointer.git
+$ cd python
+$ python setup.py install
+```
+
+## Usage
+
+Run `skypointer-gui`.
+
+
+## Communication with Stellarium
+
+* Start `skypointer-gui`.
+
+* Check *Enable server* in the *Configuration* tab, select a server port number
+  and click *Apply*.
+
+* Start Stellarium.
 
 * Enable the plugin *Telescope control* in Stellarium. If it was disabled,
   you will need to restart Stellarium (only the first time).
@@ -58,41 +112,9 @@ For development, it is strongly recommended to install this package into a
 
 * Choose a name and select "Equinox of the date (JNow)".
 
-* Enter the TCP port 100001 (or the port you passed to the `sky-pointer` command).
+* Enter the TCP port of the server.
 
 * Close the dialog and press "Connect".
 
 Now you can send the equatorial coordinates of the selected object in
 Stellarium to the *SkyPointer* server by pressing `Ctrl+1`.
-
-## Configuration file
-
-sky-pointer reads a configuration file that can be located at the following
-places:
-
-* `~/.config/sky-pointer`
-
-* `~/.sky-pointer/config`
-
-* `~/sky-pointerrc`
-
-* `/etc/sky-pointer/config`
-
-This is an example of a valid configuration file:
-
-```
-[sky-pointer]
-
-serial = /dev/ttyUSB0
-joystick = /dev/input/js0
-iface = 0.0.0.0
-port = 10001
-
-# mechanical errors (in radians)
-z1 = 0.0
-z2 = 0.0
-z3 = 0.0
-```
-
-The options defined in the configuration file will be overriden by the
-command-line arguments, except the mechanical errors.
