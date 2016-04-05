@@ -1,6 +1,5 @@
 import sys
 import argparse
-import pylab
 from math import sqrt, pi, cos
 from scipy.optimize import fmin
 from sky_pointer.pointing_model import PointingModel
@@ -78,17 +77,23 @@ def main():
 
     # Apply downhill Simplex algorithm.
     z = fmin(func, z, args=(observations,), full_output=0, xtol=2e-6)
+    print
     print "Mount errors (rad):", z
     print "Mount errors (deg):", z*180/pi
 
-    pe, te = calc_errors(z, observations)
-    pylab.plot(pe, te, 'ro')
-    pylab.xlim([-.5, .5])
-    pylab.ylim([-.5, .5])
-    pylab.grid(True)
-    pylab.xlabel("Phi error")
-    pylab.ylabel("Theta error")
-    pylab.show()
+    try:
+        import pylab
+    except ImportError:
+        pass
+    else:
+        pe, te = calc_errors(z, observations)
+        pylab.plot(pe, te, 'ro')
+        pylab.xlim([-.5, .5])
+        pylab.ylim([-.5, .5])
+        pylab.grid(True)
+        pylab.xlabel("Phi error")
+        pylab.ylabel("Theta error")
+        pylab.show()
 
 
 if __name__ == '__main__':

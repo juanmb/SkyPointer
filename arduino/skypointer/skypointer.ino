@@ -51,7 +51,7 @@ SerialCommand sCmd;
 // Definition of the motor shield
 SkyPointer_MotorShield MS = SkyPointer_MotorShield();
 // Motor 1 on port 1, 200 steps/rev
-SkyPointer_MicroStepper *motor1 =MS.getMicroStepper(STEPS, 1);
+SkyPointer_MicroStepper *motor1 = MS.getMicroStepper(STEPS, 1);
 // Motor 2 on port 2, 200 steps/rev
 SkyPointer_MicroStepper *motor2 = MS.getMicroStepper(STEPS, 2);
 
@@ -113,7 +113,7 @@ void ISR_rotate() {
   if (home) {
     // if homing, move motor2 until the photodiode gets interrupted
     if (analogRead(PHOTO_PIN) < 512) {
-      motor2->microstep(1, 0);
+      motor2->microstep(1, BACKWARD);
     } else {
       motor2->setPos(0);
       home = false;

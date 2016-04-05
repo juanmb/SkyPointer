@@ -1,13 +1,14 @@
 import sys
-from functools import partial
 import glob
 import serial
+from time import time
+from functools import partial
 from threading import Timer
 from PyQt4 import QtCore, QtGui
 from serial import SerialException
-from math import pi, copysign
-from ..pointer import Pointer
-from ..coords import EqCoords
+from sky_pointer.pointer import Pointer
+from sky_pointer.coords import Coords, EqCoords
+from sky_pointer.server import StellariumServerThread
 from bright_stars import bright_stars
 import main_dlg
 import calib_dlg
@@ -98,6 +99,7 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         self.setupUi(self)
         self.cfg = QtCore.QSettings('skypointer')
         self.run_tmr = Timer(0, None)
+        self.server = None
 
         # allow using the arrows keys
         self.setChildrenFocusPolicy(QtCore.Qt.NoFocus)
@@ -115,6 +117,8 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         self.rightButton.released.connect(partial(self.onArrow, 'right', False))
         self.gotoButton.clicked.connect(self.onGoto)
         self.alignButton.clicked.connect(self.onAlign)
+        self.newPointButton.clicked.connect(self.onNewPoint)
+        self.saveButton.clicked.connect(self.onSavePoints)
         self.calibrateButton.clicked.connect(self.onCalibrate)
 
         for port in list_serial_ports():
@@ -130,6 +134,11 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         self.serverPort.setValue(self.cfg.value('server_port', type=int))
 
         self.connect_pointer()
+        self.start_server()
+
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update_coords)
+        self.timer.start(1000)
 
     def setChildrenFocusPolicy (self, policy):
         def set_policy (parentQWidget):
@@ -142,6 +151,8 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         if hasattr(self, 'ptr'):
             self.ptr.close()
 
+        self.statusAligned.setText('No')
+
         try:
             self.ptr = Pointer(str(self.cfg.value('serial_port', type=str)))
         except (SerialException, IOError) as e:
@@ -151,16 +162,63 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         else:
             self.statusDevice.setText(self.ptr.get_id())
             self.update_calib()
+            #self.load_alignment()
 
-        self.statusAligned.setText('No')
         self.coordBox.setEnabled(self.ptr is not None)
         self.controlBox.setEnabled(self.ptr is not None)
 
-    def update_target(self):
+    def load_alignment(self):
+        """load last stored alignment. It doesn't work, because the motors do
+        not maintain its position after shut down.
+        """
+
+        def load(key):
+            val, ok = self.cfg.value(key).toDouble()
+            if not ok:
+                raise ValueError
+            return val
+
         if self.ptr:
-            tgt = self.ptr.target
-            self.coordTarget.setText(str(tgt))
-            self.alignButton.setEnabled(True)
+            try:
+                eq1 = EqCoords(load('ref1_ra'), load('ref1_dec'))
+                ins1 = Coords(load('ref1_az'), load('ref1_el'))
+                print eq1, ins1
+                self.ptr.set_ref(eq1, ins1, load('ref1_t'))
+
+                eq2 = EqCoords(load('ref2_ra'), load('ref2_dec'))
+                ins2 = Coords(load('ref2_az'), load('ref2_el'))
+                print eq2, ins2
+                self.ptr.set_ref(eq2, ins2, load('ref2_t'))
+
+                print "Restored last alignment"
+                self.statusAligned.setText('Yes (last)')
+            except ValueError as e:
+                print e
+
+
+    def start_server(self):
+        enable = self.enableServer.checkState()
+        host = '127.0.0.1' if self.localHostOnly.checkState() else '0.0.0.0'
+        port = self.serverPort.value()
+
+        if enable and not self.server:
+            print "Running server on %s:%d" % (host, port)
+            self.server = StellariumServerThread(host, port, goto=self.set_target)
+            self.server.start()
+
+    def set_target(self, target):
+        self.coordTarget.setText(str(target))
+        self.alignButton.setEnabled(True)
+
+        if self.ptr:
+            try:
+                self.ptr.goto(target)
+            except ValueError:
+                print "Not aligned"
+
+    def update_coords(self):
+        if self.ptr:
+            self.coordCurrent.setText(str(self.ptr.get_coords()))
 
     def update_calib(self):
         if self.ptr:
@@ -198,9 +256,12 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         self.cfg.setValue('localhost_only', bool(self.localHostOnly.checkState()))
         self.cfg.setValue('server_port', self.serverPort.value())
 
-        QtGui.QMessageBox.information(self, "Applied",
-                                      "Configuration has been saved in\n%s" % self.cfg.fileName())
+        text = "The server settings will be applied\nwhen you restart the program.\n\n" \
+            "Configuration saved in\n%s" % self.cfg.fileName()
+        QtGui.QMessageBox.information(self, "Applied", text)
+
         self.connect_pointer()
+        self.start_server()
 
     def onLaser(self):
         if self.ptr:
@@ -235,14 +296,14 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
                                           "Calibration has been uploaded to the device")
             self.connect_pointer()
 
+    def onSavePoints(self):
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save file')
+        open(fname, 'w').write(self.textPoints.toPlainText())
+
     def onGoto(self):
         dlg = GotoDialog(self, self.ptr.target)
         if dlg.exec_():
-            try:
-                self.ptr.goto(dlg.getTarget())
-            except ValueError:
-                print "Not aligned"
-            self.update_target()
+            self.set_target(dlg.getTarget())
 
     def onAlign(self):
         try:
@@ -257,11 +318,28 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
             text = 'No (1 point)'
         else:
             text = 'Yes (2 points)'
+            self.newPointButton.setEnabled(True)
+
+            # store the alignment references in the settings file
+            #for i, ref in enumerate(self.ptr.get_refs()):
+                #self.cfg.setValue('ref%d_ra' % (i+1), ref['eq'][0])
+                #self.cfg.setValue('ref%d_dec' % (i+1), ref['eq'][1])
+                #self.cfg.setValue('ref%d_az' % (i+1), ref['inst'][0])
+                #self.cfg.setValue('ref%d_el' % (i+1), ref['inst'][1])
+                #self.cfg.setValue('ref%d_t' % (i+1), ref['t'])
 
         self.statusAligned.setText(text)
 
+    def onNewPoint(self):
+        tgt = self.ptr.target
+        inst = self.ptr.get_inst_coords()
+        line = "%.2f %.4f %.4f %.4f %.4f" % \
+            (time(), tgt[0], tgt[1], inst[0], inst[1])
+        self.textPoints.append(line)
+
     def closeEvent(self,event):
-        self.ptr.close()
+        if self.ptr:
+            self.ptr.close()
 
 
 def main():

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_dlg.ui'
 #
-# Created: Mon Apr  4 00:04:06 2016
+# Created: Wed Apr  6 00:08:26 2016
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -263,21 +263,22 @@ class Ui_spcontroller(object):
         self.verticalLayout_6.setObjectName(_fromUtf8("verticalLayout_6"))
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
-        self.addPointButton = QtGui.QPushButton(self.points)
-        self.addPointButton.setEnabled(False)
-        self.addPointButton.setObjectName(_fromUtf8("addPointButton"))
-        self.horizontalLayout_2.addWidget(self.addPointButton)
+        self.newPointButton = QtGui.QPushButton(self.points)
+        self.newPointButton.setEnabled(False)
+        self.newPointButton.setObjectName(_fromUtf8("newPointButton"))
+        self.horizontalLayout_2.addWidget(self.newPointButton)
         spacerItem3 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem3)
         self.saveButton = QtGui.QPushButton(self.points)
         self.saveButton.setObjectName(_fromUtf8("saveButton"))
         self.horizontalLayout_2.addWidget(self.saveButton)
         self.verticalLayout_6.addLayout(self.horizontalLayout_2)
-        self.pointsTable = QtGui.QTableView(self.points)
-        self.pointsTable.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-        self.pointsTable.setObjectName(_fromUtf8("pointsTable"))
-        self.verticalLayout_6.addWidget(self.pointsTable)
         self.verticalLayout_7.addLayout(self.verticalLayout_6)
+        self.textPoints = QtGui.QTextEdit(self.points)
+        self.textPoints.setLineWrapMode(QtGui.QTextEdit.NoWrap)
+        self.textPoints.setReadOnly(False)
+        self.textPoints.setObjectName(_fromUtf8("textPoints"))
+        self.verticalLayout_7.addWidget(self.textPoints)
         self.tabWidget.addTab(self.points, _fromUtf8(""))
         self.verticalLayout.addWidget(self.tabWidget)
 
@@ -307,7 +308,7 @@ class Ui_spcontroller(object):
         self.gotoButton.setText(_translate("spcontroller", "Go to...", None))
         self.gotoButton.setShortcut(_translate("spcontroller", "G", None))
         self.alignButton.setText(_translate("spcontroller", "Align", None))
-        self.alignButton.setShortcut(_translate("spcontroller", "S", None))
+        self.alignButton.setShortcut(_translate("spcontroller", "A", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.main), _translate("spcontroller", "&Main", None))
         self.serialPortLabel.setText(_translate("spcontroller", "Serial port:", None))
         self.joystickLabel.setText(_translate("spcontroller", "Joystick:", None))
@@ -318,7 +319,8 @@ class Ui_spcontroller(object):
         self.calibrateButton.setText(_translate("spcontroller", "Calibrate...", None))
         self.applyButton.setText(_translate("spcontroller", "Apply", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.config), _translate("spcontroller", "&Configuration", None))
-        self.addPointButton.setText(_translate("spcontroller", "Add point", None))
+        self.newPointButton.setText(_translate("spcontroller", "New point", None))
+        self.newPointButton.setShortcut(_translate("spcontroller", "N", None))
         self.saveButton.setText(_translate("spcontroller", "Save...", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.points), _translate("spcontroller", "&Points", None))
 

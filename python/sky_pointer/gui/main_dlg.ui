@@ -261,7 +261,7 @@
                <string>Align</string>
               </property>
               <property name="shortcut">
-               <string>S</string>
+               <string>A</string>
               </property>
               <property name="autoDefault">
                <bool>false</bool>
@@ -529,12 +529,15 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <item>
-            <widget class="QPushButton" name="addPointButton">
+            <widget class="QPushButton" name="newPointButton">
              <property name="enabled">
               <bool>false</bool>
              </property>
              <property name="text">
-              <string>Add point</string>
+              <string>New point</string>
+             </property>
+             <property name="shortcut">
+              <string>N</string>
              </property>
             </widget>
            </item>
@@ -560,14 +563,17 @@
            </item>
           </layout>
          </item>
-         <item>
-          <widget class="QTableView" name="pointsTable">
-           <property name="editTriggers">
-            <set>QAbstractItemView::NoEditTriggers</set>
-           </property>
-          </widget>
-         </item>
         </layout>
+       </item>
+       <item>
+        <widget class="QTextEdit" name="textPoints">
+         <property name="lineWrapMode">
+          <enum>QTextEdit::NoWrap</enum>
+         </property>
+         <property name="readOnly">
+          <bool>false</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

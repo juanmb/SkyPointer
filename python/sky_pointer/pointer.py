@@ -45,11 +45,16 @@ class Pointer:
         for i, v in enumerate(calib):
             self.__hw.set_calib(i, v)
 
-    def set_ref(self):
-        self.__pm.set_ref(self.target, self.get_inst_coords())
+    def set_ref(self, eq=None, inst=None, t=0):
+        self.__pm.set_ref(eq or self.target, inst or self.get_inst_coords(), t)
 
     def get_refs(self):
-        return self.__pm.eq_refs
+        eq = self.__pm.eq_refs
+        inst = self.__pm.inst_refs
+        t = self.__pm.t_refs
+
+        return [{'eq': eq[0], 'inst': inst[0], 't': t[0]},
+                {'eq': eq[1], 'inst': inst[1], 't': t[1]}]
 
     def get_nrefs(self):
         return self.__pm.get_nrefs()

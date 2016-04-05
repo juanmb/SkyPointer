@@ -1,4 +1,4 @@
-from math import pi, copysign, modf
+from math import pi, copysign, modf, floor
 
 
 class Coords(object):
@@ -25,12 +25,12 @@ class Coords(object):
 class EqCoords(Coords):
     def fields(self):
         hfrac, ra_h = modf(abs(self.x*12/pi))
-        mfrac, ra_m = modf(hfrac*60)
-        ra_s = mfrac*60.
+        mfrac, ra_m = modf(hfrac*60.)
+        ra_s = floor(mfrac*60)
 
         dfrac, dec_d = modf(abs(self.y*180/pi))
-        mfrac, dec_m = modf(dfrac*60)
-        dec_s = mfrac*60.
+        mfrac, dec_m = modf(dfrac*60.)
+        dec_s = floor(mfrac*60)
 
         return ra_h % 24, ra_m, ra_s, copysign(dec_d, self.y), dec_m, dec_s
 
