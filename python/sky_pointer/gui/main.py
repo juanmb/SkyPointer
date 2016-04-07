@@ -226,7 +226,7 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
             self.statusCalibration.setText(' '.join([("%.4f" % c) for c in calib]))
 
     def processKeyEvent(self, event, pressed):
-        if event.isAutoRepeat():
+        if not self.ptr or event.isAutoRepeat():
             return
         key = event.key()
         if key == QtCore.Qt.Key_Right:
@@ -268,6 +268,9 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
             self.ptr.enable_laser(self.laserButton.isChecked())
 
     def onArrow(self, key, pressed):
+        if not self.ptr:
+            return
+
         if pressed:
             az, el = 0, 0
             if key == 'left':
