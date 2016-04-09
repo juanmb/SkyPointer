@@ -197,9 +197,10 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
 
 
     def start_server(self):
-        enable = self.enableServer.checkState()
-        host = '127.0.0.1' if self.localHostOnly.checkState() else '0.0.0.0'
-        port = self.serverPort.value()
+        enable = self.cfg.value('enable_server', type=bool)
+        host = '127.0.0.1' if self.cfg.value('localhost_only') else '0.0.0.0'
+        port = self.cfg.value('server_port', type=int)
+        print enable, host, port
 
         if enable and not self.server:
             print "Running server on %s:%d" % (host, port)
@@ -217,8 +218,11 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
                 print "Not aligned"
 
     def update_coords(self):
-        if self.ptr:
-            self.coordCurrent.setText(str(self.ptr.get_coords()))
+        if self.ptr and len(self.ptr.get_refs()) == 2:
+            pos = self.ptr.get_coords()
+            self.coordCurrent.setText(str(pos))
+            if self.server:
+                self.server.set_pos(pos)
 
     def update_calib(self):
         if self.ptr:
@@ -314,7 +318,7 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         except ValueError as e:
             QtGui.QMessageBox.warning(self, "Alignment error", str(e))
 
-        npoints = self.ptr.get_nrefs()
+        npoints = len(self.ptr.get_refs())
         if npoints == 0:
             text = 'No'
         if npoints == 1:

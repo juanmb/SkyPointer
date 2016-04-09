@@ -16,7 +16,7 @@ class Protocol:
         self.__lock = threading.Lock()
         self.__ser = serial.Serial(device, baud, timeout=1)
         self.__ser.flushInput()
-        time.sleep(1.5)
+        time.sleep(1.7)     # wait until Arduino bootloader exits
 
     def __send_command(self, cmd, ret_len=3, ret_ok='OK'):
         """Send a serial command and check the response."""
@@ -27,7 +27,7 @@ class Protocol:
 
                 if ret.startswith(ret_ok):
                     return ret
-                print "command failed. retrying"
+                print "Command failed (%s). retrying" % cmd
                 self.__ser.flushInput()
 
         raise IOError('Serial command "%s" returned "%s"' % (cmd, ret.strip()))

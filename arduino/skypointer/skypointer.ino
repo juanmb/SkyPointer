@@ -27,7 +27,8 @@ The library SkyPointer_MotorShield can be downloaded from:
 //#define RPM 1   // Desired rotation speed in rpm
 
 // Define pins
-#define LASER_PIN 13
+#define LASER_PIN_L 12
+#define LASER_PIN_H 13
 #define PHOTO_PIN A0
 
 // Define how long the laser stays on when the target has been reached
@@ -57,6 +58,12 @@ SkyPointer_MicroStepper *motor2 = MS.getMicroStepper(STEPS, 2);
 
 int home = false;
 
+inline void set_laser(int on)
+{
+    digitalWrite(LASER_PIN_L, !on);
+    digitalWrite(LASER_PIN_H, on);
+}
+
 /****************************************************************************/
 // Timing routine
 void ISR_timer(){
@@ -64,7 +71,7 @@ void ISR_timer(){
   // the desired ON time
   uint32_t t_on = MS.getTimeOn(); // Get the stored value for laser_t_on
   if (t_on >= LASER_T_ON){
-    digitalWrite(LASER_PIN, LOW); // Turn off the laser
+    set_laser(0); // Turn off the laser
     Timer1.detachInterrupt();     // Detach interruption
   }
   MS.setTimeOn(t_on + uint32_t(DT));// Increment with the current time
@@ -84,8 +91,7 @@ void ISR_rotate() {
   uint8_t dir;
 
   // Turn on the laser
-  digitalWrite(LASER_PIN, HIGH);
-
+  set_laser(1);
 
   sei();  // Enable interrupts --> Serial, I2C (MotorShield)
 
@@ -133,9 +139,7 @@ void ISR_rotate() {
   if ((motor1->isTarget()) && (motor2->isTarget())) {
     // If both motors are in the target position...
     Timer1.detachInterrupt();	// Stop Timer1 interruption
-    // TURN OFF THE LASER
-    //digitalWrite(LASER_PIN, LOW);
-    MS.setTimeOn(uint32_t(0));          // Set timer to current time
+    MS.setTimeOn(uint32_t(0));         // Set timer to current time
     Timer1.attachInterrupt(ISR_timer); // Attach temporization routine
 
     // Must check a global variable that contains the status of the laser, ON
@@ -218,7 +222,7 @@ void ProcessLaser() {
   uint8_t enable;
 
   enable = atoi(sCmd.next()) != 0;
-  digitalWrite(LASER_PIN, enable);
+  set_laser(enable);
   Serial.print("OK\r");
 }
 
@@ -227,7 +231,7 @@ void ProcessLaser() {
 void ProcessQuit() {
   motor1->release();
   motor2->release();
-  digitalWrite(LASER_PIN, 0);
+  set_laser(0);
   Serial.print("OK\r");
 }
 
@@ -280,8 +284,9 @@ void Unrecognized() {
 
 void setup() {
   // Configure laser pin and set to LOW
-  pinMode(LASER_PIN, OUTPUT);
-  digitalWrite(LASER_PIN, LOW);
+  pinMode(LASER_PIN_L, OUTPUT);
+  pinMode(LASER_PIN_H, OUTPUT);
+  set_laser(0);
   #ifdef DEBUG_ISR
     pinMode (blinkLed, OUTPUT);
     digitalWrite (blinkLed, LOW);   // Turn off the LED

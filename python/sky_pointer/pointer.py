@@ -22,11 +22,11 @@ def rad2steps(a, b):
 class Pointer:
     def __init__(self, device='/dev/ttyUSB0', baud=115200):
         self.__hw = Protocol(device, baud)
+        self.hid = self.get_id()
         self.calib = self.__get_calib()
         self.__pm = PointingModel(z1=self.calib[0], z2=self.calib[1],
                                   z3=self.calib[2])
         self.target = EqCoords(0, 0)
-        self.hid = self.get_id()
         self.home()
 
     def get_id(self):
@@ -49,15 +49,16 @@ class Pointer:
         self.__pm.set_ref(eq or self.target, inst or self.get_inst_coords(), t)
 
     def get_refs(self):
+        """Return a list of dictionaries, each containing the observation time,
+        equatorial and instrumental coordinates of a reference star"""
         eq = self.__pm.eq_refs
         inst = self.__pm.inst_refs
         t = self.__pm.t_refs
 
-        return [{'eq': eq[0], 'inst': inst[0], 't': t[0]},
-                {'eq': eq[1], 'inst': inst[1], 't': t[1]}]
-
-    def get_nrefs(self):
-        return self.__pm.get_nrefs()
+        refs = []
+        for i in range(self.__pm.get_nrefs()):
+            refs.append({'eq': eq[i], 'inst': inst[i], 't': t[i]})
+        return refs
 
     def steps(self, ha, el):
         self.__hw.move(ha, el)

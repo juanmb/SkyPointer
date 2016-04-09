@@ -12,7 +12,7 @@ setup(
     install_requires=['pyserial', 'numpy', 'rcfile'],
     author_email='juanmb@gmail.com',
     description='Software for controlling a motorized sky-pointing laser',
-    packages=['sky_pointer'],
+    packages=['sky_pointer', 'sky_pointer.gui'],
     platforms='any',
     entry_points={
         'console_scripts': [
