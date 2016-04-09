@@ -93,6 +93,16 @@ class GotoDialog(QtGui.QDialog, goto_dlg.Ui_GotoDialog):
                                     self.dec_m.value(), self.dec_s.value())
 
 
+def requires_pointer(f):
+    """Method decorator for checking that self.ptr is not None.
+    If self.ptr is None, the function will return inmediately"""
+    def wrapper(*args, **kwargs):
+        if args[0].ptr is None:
+            return
+        return f(*args, **kwargs)
+    return wrapper
+
+
 class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
     def __init__(self, parent=None):
         super(MyApp, self).__init__(parent)
@@ -100,6 +110,7 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         self.cfg = QtCore.QSettings('skypointer')
         self.run_tmr = Timer(0, None)
         self.server = None
+        self.ptr = None
 
         # allow using the arrows keys
         self.setChildrenFocusPolicy(QtCore.Qt.NoFocus)
@@ -148,7 +159,7 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         set_policy(self)
 
     def connect_pointer(self):
-        if hasattr(self, 'ptr'):
+        if self.ptr:
             self.ptr.close()
 
         self.statusAligned.setText('No')
@@ -164,9 +175,11 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
             self.update_calib()
             #self.load_alignment()
 
+        self.calibrateButton.setEnabled(True)
         self.coordBox.setEnabled(self.ptr is not None)
         self.controlBox.setEnabled(self.ptr is not None)
 
+    @requires_pointer
     def load_alignment(self):
         """load last stored alignment. It doesn't work, because the motors do
         not maintain its position after shut down.
@@ -178,22 +191,21 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
                 raise ValueError
             return val
 
-        if self.ptr:
-            try:
-                eq1 = EqCoords(load('ref1_ra'), load('ref1_dec'))
-                ins1 = Coords(load('ref1_az'), load('ref1_el'))
-                print eq1, ins1
-                self.ptr.set_ref(eq1, ins1, load('ref1_t'))
+        try:
+            eq1 = EqCoords(load('ref1_ra'), load('ref1_dec'))
+            ins1 = Coords(load('ref1_az'), load('ref1_el'))
+            print eq1, ins1
+            self.ptr.set_ref(eq1, ins1, load('ref1_t'))
 
-                eq2 = EqCoords(load('ref2_ra'), load('ref2_dec'))
-                ins2 = Coords(load('ref2_az'), load('ref2_el'))
-                print eq2, ins2
-                self.ptr.set_ref(eq2, ins2, load('ref2_t'))
+            eq2 = EqCoords(load('ref2_ra'), load('ref2_dec'))
+            ins2 = Coords(load('ref2_az'), load('ref2_el'))
+            print eq2, ins2
+            self.ptr.set_ref(eq2, ins2, load('ref2_t'))
 
-                print "Restored last alignment"
-                self.statusAligned.setText('Yes (last)')
-            except ValueError as e:
-                print e
+            print "Restored last alignment"
+            self.statusAligned.setText('Yes (last)')
+        except ValueError as e:
+            print e
 
 
     def start_server(self):
@@ -207,30 +219,32 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
             self.server = StellariumServerThread(host, port, goto=self.set_target)
             self.server.start()
 
+    @requires_pointer
     def set_target(self, target):
         self.coordTarget.setText(str(target))
         self.alignButton.setEnabled(True)
 
-        if self.ptr:
-            try:
-                self.ptr.goto(target)
-            except ValueError:
-                print "Not aligned"
+        try:
+            self.ptr.goto(target)
+        except ValueError:
+            print "Not aligned"
 
+    @requires_pointer
     def update_coords(self):
-        if self.ptr and len(self.ptr.get_refs()) == 2:
+        if len(self.ptr.get_refs()) == 2:
             pos = self.ptr.get_coords()
             self.coordCurrent.setText(str(pos))
             if self.server:
                 self.server.set_pos(pos)
 
+    @requires_pointer
     def update_calib(self):
-        if self.ptr:
-            calib = self.ptr.calib
-            self.statusCalibration.setText(' '.join([("%.4f" % c) for c in calib]))
+        calib = self.ptr.calib
+        self.statusCalibration.setText(' '.join([("%.4f" % c) for c in calib]))
 
+    @requires_pointer
     def processKeyEvent(self, event, pressed):
-        if not self.ptr or event.isAutoRepeat():
+        if event.isAutoRepeat():
             return
         key = event.key()
         if key == QtCore.Qt.Key_Right:
@@ -252,7 +266,7 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
     def keyReleaseEvent(self, event):
         self.processKeyEvent(event, False)
 
-    def onApply(self):
+    def onApply(self, _):
         """Save settings"""
         self.cfg.setValue('serial_port', self.serialCombo.currentText())
         self.cfg.setValue('joystick', self.joystickCombo.currentText())
@@ -267,14 +281,12 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         self.connect_pointer()
         self.start_server()
 
-    def onLaser(self):
-        if self.ptr:
-            self.ptr.enable_laser(self.laserButton.isChecked())
+    @requires_pointer
+    def onLaser(self, checked):
+        self.ptr.enable_laser(checked)
 
+    @requires_pointer
     def onArrow(self, key, pressed):
-        if not self.ptr:
-            return
-
         if pressed:
             az, el = 0, 0
             if key == 'left':
@@ -294,7 +306,8 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
             self.run_tmr.cancel()
             self.ptr.stop()
 
-    def onCalibrate(self):
+    @requires_pointer
+    def onCalibrate(self, _):
         dlg = CalibDialog(self, calib=self.ptr.calib)
         if dlg.exec_():
             self.ptr.set_calib(dlg.getCalib())
@@ -307,12 +320,14 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save file')
         open(fname, 'w').write(self.textPoints.toPlainText())
 
-    def onGoto(self):
+    @requires_pointer
+    def onGoto(self, _):
         dlg = GotoDialog(self, self.ptr.target)
         if dlg.exec_():
             self.set_target(dlg.getTarget())
 
-    def onAlign(self):
+    @requires_pointer
+    def onAlign(self, _):
         try:
             self.ptr.set_ref()
         except ValueError as e:
@@ -337,16 +352,17 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
 
         self.statusAligned.setText(text)
 
-    def onNewPoint(self):
+    @requires_pointer
+    def onNewPoint(self, _):
         tgt = self.ptr.target
         inst = self.ptr.get_inst_coords()
         line = "%.2f %.4f %.4f %.4f %.4f" % \
             (time(), tgt[0], tgt[1], inst[0], inst[1])
         self.textPoints.append(line)
 
-    def closeEvent(self,event):
-        if self.ptr:
-            self.ptr.close()
+    @requires_pointer
+    def closeEvent(self, event):
+        self.ptr.close()
 
 
 def main():

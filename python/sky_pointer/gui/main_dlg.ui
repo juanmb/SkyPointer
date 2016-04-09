@@ -379,6 +379,64 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="points">
+      <attribute name="title">
+       <string>&amp;Points</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_7">
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QPushButton" name="newPointButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>New point</string>
+             </property>
+             <property name="shortcut">
+              <string>N</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="saveButton">
+             <property name="text">
+              <string>Save...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTextEdit" name="textPoints">
+         <property name="lineWrapMode">
+          <enum>QTextEdit::NoWrap</enum>
+         </property>
+         <property name="readOnly">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="config">
       <attribute name="title">
        <string>&amp;Configuration</string>
@@ -481,6 +539,9 @@
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QPushButton" name="calibrateButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string>Calibrate...</string>
            </property>
@@ -516,64 +577,6 @@
           </widget>
          </item>
         </layout>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="points">
-      <attribute name="title">
-       <string>&amp;Points</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_7">
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_6">
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <item>
-            <widget class="QPushButton" name="newPointButton">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>New point</string>
-             </property>
-             <property name="shortcut">
-              <string>N</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QPushButton" name="saveButton">
-             <property name="text">
-              <string>Save...</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QTextEdit" name="textPoints">
-         <property name="lineWrapMode">
-          <enum>QTextEdit::NoWrap</enum>
-         </property>
-         <property name="readOnly">
-          <bool>false</bool>
-         </property>
-        </widget>
        </item>
       </layout>
      </widget>
