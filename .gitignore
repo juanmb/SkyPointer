@@ -64,3 +64,4 @@ target/
 *.fcstd1
 *-bak
 *.bak
+*.swp
