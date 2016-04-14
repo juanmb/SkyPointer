@@ -1,5 +1,5 @@
-# This Makefile is used to compile and upload the code to the Arduino via Make , instead
-# of using the IDE.
+# This Makefile is used to compile and upload the code to the Arduino via Make,
+# instead of using the IDE.
 #
 # The user should replace ARDUINO_PORT and the path to Arduino.mk for the
 # rigth values if this Makefile is going to be used. 

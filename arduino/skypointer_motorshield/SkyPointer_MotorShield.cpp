@@ -1,48 +1,50 @@
-/******************************************************************
- This code has been adapter from the library for the
- Adafruit Motor Shield V2 for Arduino.
- It supports DC motors & Stepper motors with microstepping as well
- as stacking-support. It is *not* compatible with the V1 library!
-
- It will only work with https://www.adafruit.com/products/1483
-
- Adafruit invests time and resources providing this open
- source code, please support Adafruit and open-source hardware
- by purchasing products from Adafruit!
-
- Written by Limor Fried/Ladyada for Adafruit Industries.
- BSD license, check license.txt for more information.
- All text above must be included in any redistribution.
-*******************************************************************/
-
 /*******************************************************************************
-    TO-DO
-    -----
-[ ] Make setSpeed functional or remove it. It should set the time interval in
-    the TimerOne interruption, but then it would not make sense when the library
-    is not used.
-[ ] Implement another 'getSpeed' function that returns actual speed instead of
-    time interval?
+Author:    David Vazquez Garcia    <davidvazquez.gijon@gmail.com>
+           Juan Menendez Blanco    <juanmb@gmail.com>
+Version:   1.0
+Date:      2016/Apr/08
 
+This code is an adaptation of the Adafruit library for the Adafruit Motor
+Shield V2 motor driver for Arduino [1]
+
+The library implements some new methods and variables for the specific use in
+the SkyPointer project [2]. Stepper and DC motor control have been removed.
+
+----
+
+This code has been adapter from the library for the
+Adafruit Motor Shield V2 for Arduino.
+
+It supports DC motors & Stepper motors with microstepping as well
+as stacking-support. It is *not* compatible with the V1 library!
+
+It will only work with https://www.adafruit.com/products/1483
+
+Adafruit invests time and resources providing this open
+source code, please support Adafruit and open-source hardware
+by purchasing products from Adafruit!
+ 
+BSD license, check license.txt for more information.
+All text above must be included in any redistribution.
+
+Reference:
+[1]  https://www.adafruit.com/products/1483
+[2]  https://github.com/juanmb/SkyPointer
 *******************************************************************************/
-/*
-
-    ADD COMMENTS HERE, BIATCH !!
-
-*/
-
 #if (ARDUINO >= 100)
- #include "Arduino.h"
+    #include "Arduino.h"
 #else
- #include "WProgram.h"
+    #include "WProgram.h"
 #endif
+
 #include <Wire.h>
 #include "SkyPointer_MotorShield.h"
 #include "utility/Adafruit_PWMServoDriver.h" // It's local to this path
+
 #ifdef __AVR__
- #define WIRE Wire
+    #define WIRE Wire
 #else // Arduino Due
- #define WIRE Wire1
+    #define WIRE Wire1
 #endif
 
 // Custom macro for modulus function that allows negative numbers
@@ -56,26 +58,25 @@ uint16_t microstepcurve[] = {0, 799, 1567, 2275, 2896, 3405, 3783, 4016, 4095};
 uint16_t microstepcurve[] = {0, 401, 799, 1189, 1567, 1930, 2275, 2598, 2896, 3165, 3405, 3611, 3783, 3919, 4016, 4075, 4095};
 #endif
 
-/******************************************************************************/
+
 SkyPointer_MotorShield::SkyPointer_MotorShield(uint8_t addr) {
     // Constructor for the class
     _addr = addr;
     _pwm = Adafruit_PWMServoDriver(_addr);
 }
-/******************************************************************************/
+
 void SkyPointer_MotorShield::begin(uint16_t freq) {
     // Initializes the board with a PWM frequency of freq
     WIRE.begin();
     _pwm.begin();
     _freq = freq;
-    _pwm.setPWMFreq(_freq);  // This is the maximum PWM frequency
+    _pwm.setPWMFreq(_freq);         // This is the maximum PWM frequency
     for (uint8_t i=0; i<16; i++)
     _pwm.setPWM(i, 0, 0);
 
-    // Initialize times
-    laser_t_on = 0;
+    laser_t_on = 0;                 // Initialize laser ON time
 }
-/******************************************************************************/
+
 void SkyPointer_MotorShield::setPWM(uint8_t pin, uint16_t value) {
     // Sets PWM values for the coils excitation
     if (value > 4095) {
@@ -83,7 +84,7 @@ void SkyPointer_MotorShield::setPWM(uint8_t pin, uint16_t value) {
     } else
     _pwm.setPWM(pin, 0, value);
 }
-/******************************************************************************/
+
 void SkyPointer_MotorShield::setPin(uint8_t pin, boolean value) {
     // Sets amplitude values for the coils excitation
     if (value == LOW)
@@ -92,28 +93,29 @@ void SkyPointer_MotorShield::setPin(uint8_t pin, boolean value) {
     _pwm.setPWM(pin, 4096, 0);
 }
 
-
 void SkyPointer_MotorShield::setTimeOn(uint32_t t){
     laser_t_on = t;
 }
 
-
 uint32_t SkyPointer_MotorShield::getTimeOn() {
     return laser_t_on;
 }
-/*******************************************************************************
-    ###  Class for the MicroStepper motor  ###
-*******************************************************************************/
+
+void SkyPointer_MotorShield::laser(uint8_t enable) {
+    digitalWrite(LASER_PIN_H, enable);
+    digitalWrite(LASER_PIN_L, !enable);
+}
+
+//  Class for the MicroStepper motor
 SkyPointer_MicroStepper::SkyPointer_MicroStepper (void) {
-    // Constructor for the MicroStepper class
-    // Initializes to zero
+    // Constructor
     target = 0;           // Value for target position
     microstepsPerRev = 0; // Steps per rev times MICROSTEPS
     microsteppernum = 0;  // Identifier for the motor, {1, 2}
     currMicrostep = 0;    // Current microstep in the range [0, MICROSTEPS]
     currPos = 0;          // Current position in microsteps in the revolution
 }
-/******************************************************************************/
+
 SkyPointer_MicroStepper *SkyPointer_MotorShield::getMicroStepper (uint16_t steps, uint8_t num) {
     /*
     Defines a stepper motor in microstep rotation mode.
@@ -124,14 +126,11 @@ SkyPointer_MicroStepper *SkyPointer_MotorShield::getMicroStepper (uint16_t steps
     num--;  // Changes the number of the motor to fit the range {0, 1}
 
     if (microsteppers[num].microsteppernum == 0) {
-        microsteppers[num].microsteppernum = num; // Number of the motor
-        microsteppers[num].microstepsPerRev = steps*MICROSTEPS; // Number of
-                   // microsteps per rev; this could be changed to customize the
-                   // number of microsteps per step by using a variable
+        microsteppers[num].microsteppernum = num; // ID number for the motor
+        microsteppers[num].microstepsPerRev = steps*MICROSTEPS;
         microsteppers[num].MC = this;
         // Variables for the PWM control
         uint8_t pwma, pwmb, ain1, ain2, bin1, bin2;
-
         // Configuration of the motor's pins
         if (num == 0) {
             pwma = 8;   ain2 = 9;   ain1 = 10;
@@ -149,7 +148,27 @@ SkyPointer_MicroStepper *SkyPointer_MotorShield::getMicroStepper (uint16_t steps
     }
     return &microsteppers[num];
 }
-/******************************************************************************/
+
+void SkyPointer_MicroStepper::setPos(uint16_t pos) {
+    // Sets the current position
+    currPos = pos;
+}
+
+uint16_t SkyPointer_MicroStepper::getPosition() {
+    // Returns the current ABSOLUTE position of the motor.
+    return currPos;
+}
+
+void SkyPointer_MicroStepper::setTarget(uint16_t _target) {
+    // Sets the value for the target, in ABSOLUTE microsteps
+    target = _target;
+}
+
+boolean SkyPointer_MicroStepper::isTarget() {
+    // Checks if currPos == target and returns 1 if True or 0 otherwise
+    return (currPos == target);
+}
+
 void SkyPointer_MicroStepper::setSpeed (float rpm) {
     // This function calculates the value that must be loaded in
     // Timer1 register for interrupts to occur at needed intervals for producing
@@ -161,38 +180,12 @@ void SkyPointer_MicroStepper::setSpeed (float rpm) {
     // definition.
     usecPerMicrostep = (uint32_t)(60000000L / (microstepsPerRev * rpm));
 }
-/******************************************************************************/
+
 uint32_t SkyPointer_MicroStepper::getSpeed() {
     // Returns time interval in microsecons between two microstep rotations.
     return usecPerMicrostep;
 }
-/******************************************************************************/
-void SkyPointer_MicroStepper::release(void) {
-    // Releases the motor, removing voltage from the coils. Free rotation.
-    MC->setPin(AIN1pin, LOW);
-    MC->setPin(AIN2pin, LOW);
-    MC->setPin(BIN1pin, LOW);
-    MC->setPin(BIN2pin, LOW);
-    MC->setPWM(PWMApin, 0);
-    MC->setPWM(PWMBpin, 0);
-}
-/******************************************************************************/
-void SkyPointer_MicroStepper::setTarget(uint16_t _target) {
-    // Sets the value for the target, in ABSOLUTE microsteps
-    target = _target;
-}
-/******************************************************************************/
-void SkyPointer_MicroStepper::setPos(uint16_t pos) {
-    // Sets the current position
-    currPos = pos;
-}
 
-/******************************************************************************/
-boolean SkyPointer_MicroStepper::isTarget() {
-    // Checks if currPos == target and returns 1 if True or 0 otherwise
-    return (currPos == target);
-}
-/******************************************************************************/
 uint16_t SkyPointer_MicroStepper::microstep(uint16_t usteps, uint8_t dir) {
     /* Produces a rotation of 'usteps' microsteps in the given direction.
             usteps --> Number of microsteps to rotate
@@ -205,15 +198,11 @@ uint16_t SkyPointer_MicroStepper::microstep(uint16_t usteps, uint8_t dir) {
     if (dir == FORWARD) {   // Forward rotation
         currMicrostep++;
         currPos++;
-        //  TEST !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // Make sure currPos is in range
         currPos += microstepsPerRev;
         currPos %= microstepsPerRev;
     }
     else {
-
-    // Can this be improved ????????????????????????????????????????????????????
-
         if (currMicrostep == 0) {
             currMicrostep = 4*MICROSTEPS - 1; // Deals with negative values
         }
@@ -226,7 +215,6 @@ uint16_t SkyPointer_MicroStepper::microstep(uint16_t usteps, uint8_t dir) {
         else {
             currPos--;          // Update position
         }
-        //  TEST !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // Make sure currPos is in range
         currPos += microstepsPerRev;
         currPos %= microstepsPerRev;
@@ -234,7 +222,6 @@ uint16_t SkyPointer_MicroStepper::microstep(uint16_t usteps, uint8_t dir) {
     // Make sure that currMicrostep is in the right range: [0, 4*MICROSTEPS]
     currMicrostep += 4*MICROSTEPS;
     currMicrostep %= 4*MICROSTEPS;
-
     // Initialize values of PWM registers
     ocra = ocrb = 0;
     // Check in which microstep the rotor is so it applies the right torque
@@ -262,10 +249,8 @@ uint16_t SkyPointer_MicroStepper::microstep(uint16_t usteps, uint8_t dir) {
     // Load values into PWM registers
     MC -> setPWM(PWMApin, ocra);
     MC -> setPWM(PWMBpin, ocrb);
-
     // Latch state for deciding which coils to excite
     uint8_t latch_state = 0;    // State variable
-
     if ((currMicrostep >= 0) && (currMicrostep < MICROSTEPS)) {
         latch_state |= 0x03;    // b'0011'
     }
@@ -279,7 +264,7 @@ uint16_t SkyPointer_MicroStepper::microstep(uint16_t usteps, uint8_t dir) {
         latch_state |= 0x09;    // b'1001'
     }
 
-    // Excitation of the coils
+    // Coil excitation
     // Check if pin BIN1 must be HIGH or LOW
     if (latch_state & 0x01) {
         MC -> setPin(AIN2pin, HIGH);
@@ -308,11 +293,15 @@ uint16_t SkyPointer_MicroStepper::microstep(uint16_t usteps, uint8_t dir) {
     else {
         MC -> setPin(BIN2pin, LOW);
     }
-
     return currPos;
 }
-/******************************************************************************/
-uint16_t SkyPointer_MicroStepper::getPosition() {
-    // Returns the current ABSOLUTE position of the motor.
-    return currPos;
+
+void SkyPointer_MicroStepper::release(void) {
+    // Releases the motor, removing voltage from the coils. Free rotation.
+    MC->setPin(AIN1pin, LOW);
+    MC->setPin(AIN2pin, LOW);
+    MC->setPin(BIN1pin, LOW);
+    MC->setPin(BIN2pin, LOW);
+    MC->setPWM(PWMApin, 0);
+    MC->setPWM(PWMBpin, 0);
 }

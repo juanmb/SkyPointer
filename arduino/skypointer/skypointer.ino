@@ -8,7 +8,6 @@ This library is implemented for its use in the SkyPointer project:
     https://githun.com/juanmb/skypointer
 
 *******************************************************************************/
-
 #include <SoftwareSerial.h>
 #include <SerialCommand.h>
 #include <Wire.h>
@@ -19,7 +18,7 @@ This library is implemented for its use in the SkyPointer project:
 // A modulo operator that handles negative numbers
 #define MOD(a,b) ((((a)%(b))+(b))%(b))
 
-// Motor parameters
+// Motor and shield parameters
 #define STEPS 200
 #define USTEPS 16
 #define TOTAL_USTEPS (STEPS*USTEPS)
@@ -28,9 +27,7 @@ This library is implemented for its use in the SkyPointer project:
 #define DT 10000 // Timer1 interrupt period
 //#define RPM 1   // Desired rotation speed in rpm
 
-// Define pins
-#define LASER_PIN_H 13 // Pin for N-channel MOSFET
-#define LASER_PIN_L 12 // Pin for P-channel MOSFET
+// Pin for the photo diode
 #define PHOTO_PIN A0
 
 // Define how long the laser stays on when the target has been reached
@@ -55,11 +52,10 @@ void ISR_timer(){
   // the desired ON time
   uint32_t t_on = MS.getTimeOn(); // Get the stored value for laser_t_on
   if (t_on >= LASER_T_ON){
-    digitalWrite(LASER_PIN_H, LOW); // Turn off the laser
-    digitalWrite(LASER_PIN_L, HIGH); // Turn off the laser
-    Timer1.detachInterrupt();     // Detach interruption
+    MS.laser(0);                        // Turn the laser off
+    Timer1.detachInterrupt();           // Detach interruption
   }
-  MS.setTimeOn(t_on + uint32_t(DT));// Increment with the current time
+  MS.setTimeOn(t_on + uint32_t(DT));    // Increment with the current time
 }
 
 // Rotation routine
@@ -67,9 +63,8 @@ void ISR_rotate() {
   uint16_t pos, sim_pos, tg;
   uint8_t dir;
 
-  // Turn on the laser
-  digitalWrite(LASER_PIN_H, HIGH);
-  digitalWrite(LASER_PIN_L, LOW);
+  // Turn the laser on 
+  MS.laser(1);
 
   sei();  // Enable interrupts --> Serial, I2C (MotorShield)
 
@@ -117,8 +112,6 @@ void ISR_rotate() {
   if ((motor1->isTarget()) && (motor2->isTarget())) {
     // If both motors are in the target position...
     Timer1.detachInterrupt();	// Stop Timer1 interruption
-    // TURN OFF THE LASER
-    //digitalWrite(LASER_PIN_H, LOW);
     MS.setTimeOn(uint32_t(0));          // Set timer to current time
     Timer1.attachInterrupt(ISR_timer); // Attach temporization routine
 
@@ -196,6 +189,8 @@ void ProcessLaser() {
   uint8_t enable;
 
   enable = atoi(sCmd.next()) != 0;
+  
+
   digitalWrite(LASER_PIN_H, enable);
   digitalWrite(LASER_PIN_L, !enable);
   Serial.print("OK\r");
@@ -206,8 +201,7 @@ void ProcessLaser() {
 void ProcessQuit() {
   motor1->release();
   motor2->release();
-  digitalWrite(LASER_PIN_H, HIGH);
-  digitalWrite(LASER_PIN_L, LOW);
+  MS.laser(0);
   Serial.print("OK\r");
 }
 
