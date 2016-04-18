@@ -43,7 +43,7 @@ SkyPointer_MicroStepper *motor1 = MS.getMicroStepper(STEPS, 1);
 // Motor 2 on port 2, 200 steps/rev
 SkyPointer_MicroStepper *motor2 = MS.getMicroStepper(STEPS, 2);
 
-int home = false;
+uint8_t home = false;
 
 // *** Interruption Routines ***
 // Timing routine
@@ -186,13 +186,9 @@ void ProcessGetPos() {
 
 // Enable/disable the laser module
 void ProcessLaser() {
-  uint8_t enable;
+  uint8_t enable = atoi(sCmd.next()) != 0;
 
-  enable = atoi(sCmd.next()) != 0;
-  
-
-  digitalWrite(LASER_PIN_H, enable);
-  digitalWrite(LASER_PIN_L, !enable);
+  MS.laser(enable);
   Serial.print("OK\r");
 }
 
@@ -254,8 +250,7 @@ void setup() {
   // Configure laser pin and set to LOW
   pinMode(LASER_PIN_H, OUTPUT);
   pinMode(LASER_PIN_L, OUTPUT);
-  digitalWrite(LASER_PIN_H, LOW);
-  digitalWrite(LASER_PIN_L, HIGH);
+  MS.laser(0);
 
   // Start the serial port
   Serial.begin(115200);
