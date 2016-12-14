@@ -10,14 +10,27 @@ import select
 import coords
 
 
-def decode_packet(data):
-    """Decode Stellarium client-server protocol packet"""
+def decode_goto_packet(data):
+    """Decode Stellarium client->server "goto" packet"""
     fields = struct.unpack('<HHQIi', data)
     return coords.EqCoords(fields[3]*pi/0x80000000, fields[4]*pi/0x80000000)
 
 
-def encode_packet(coords):
-    """Encode Stellarium client-server protocol packet"""
+def encode_goto_packet(coords):
+    """Encode Stellarium client->server "goto" packet"""
+    ra = long((coords[0] % (2*pi))/pi*0x80000000)
+    dec = long(coords[1]/pi*0x80000000)
+    return struct.pack('<HHQIi', 24, 0, time.time()*1e6, ra, dec)
+
+
+def decode_pos_packet(data):
+    """Decode Stellarium server->client "current postion" packet"""
+    fields = struct.unpack('<HHQIii', data)
+    return coords.EqCoords(fields[3]*pi/0x80000000, fields[4]*pi/0x80000000)
+
+
+def encode_pos_packet(coords):
+    """Encode Stellarium server->client "current postion" packet"""
     ra = long((coords[0] % (2*pi))/pi*0x80000000)
     dec = long(coords[1]/pi*0x80000000)
     return struct.pack('<HHQIii', 24, 0, time.time()*1e6, ra, dec, 0)
@@ -56,7 +69,7 @@ class StellariumServer(object):
                         continue
                     if data:
                         try:
-                            tgt = coords.EqCoords(*decode_packet(data))
+                            tgt = coords.EqCoords(*decode_goto_packet(data))
                         except struct.error as e:
                             logging.error(e)
                             continue
@@ -74,7 +87,7 @@ class StellariumServer(object):
             """Send the current position to all connected clients"""
             for s in self.sockets[1:]:
                 try:
-                    s.send(encode_packet(self.pos))
+                    s.send(encode_pos_packet(self.pos))
                 except IOError as e:
                     logging.error(e)
 

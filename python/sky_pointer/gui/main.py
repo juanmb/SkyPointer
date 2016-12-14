@@ -136,13 +136,13 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
             self.serialCombo.addItem(port)
 
         # load settings
-        idx = self.serialCombo.findText(self.cfg.value('serial_port', type=str))
+        idx = self.serialCombo.findText(self.cfg.value('serial_port').toString())
         self.serialCombo.setCurrentIndex(idx)
-        idx = self.joystickCombo.findText(self.cfg.value('joystick', type=str))
+        idx = self.joystickCombo.findText(self.cfg.value('joystick').toString())
         self.joystickCombo.setCurrentIndex(idx)
-        self.enableServer.setChecked(self.cfg.value('enable_server', type=bool))
-        self.localHostOnly.setChecked(self.cfg.value('localhost_only', type=bool))
-        self.serverPort.setValue(self.cfg.value('server_port', type=int))
+        self.enableServer.setChecked(self.cfg.value('enable_server').toBool())
+        self.localHostOnly.setChecked(self.cfg.value('localhost_only').toBool())
+        self.serverPort.setValue(self.cfg.value('server_port').toInt()[0])
 
         self.connect_pointer()
         self.start_server()
@@ -165,7 +165,7 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
         self.statusAligned.setText('No')
 
         try:
-            self.ptr = Pointer(str(self.cfg.value('serial_port', type=str)))
+            self.ptr = Pointer(str(self.cfg.value('serial_port').toString()))
         except (SerialException, IOError) as e:
             self.statusDevice.setText('None')
             QtGui.QMessageBox.warning(self, "Serial error", str(e))
@@ -209,9 +209,9 @@ class MyApp(QtGui.QDialog, main_dlg.Ui_spcontroller):
 
 
     def start_server(self):
-        enable = self.cfg.value('enable_server', type=bool)
+        enable = self.cfg.value('enable_server').toBool()
         host = '127.0.0.1' if self.cfg.value('localhost_only') else '0.0.0.0'
-        port = self.cfg.value('server_port', type=int)
+        port = self.cfg.value('server_port').toInt()[0]
         print enable, host, port
 
         if enable and not self.server:
