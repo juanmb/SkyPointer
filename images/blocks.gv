@@ -1,0 +1,8 @@
+  digraph SkyPointer {
+    rankdir=LR;
+    Stellarium [shape=box];
+    Server [shape=box; label="SkyPointer server\n(Python)"];
+    Arduino [shape=box; label="SkyPointer hardware\n(Arduino)"];
+    Stellarium->Server [dir=both; label="TCP"];
+    Server->Arduino [dir=both; label="USB-serial"];
+  }

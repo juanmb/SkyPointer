@@ -6,16 +6,7 @@ An open-hardware altazimuth mount with a laser pointer.
 
 The following block diagram shows the current setup:
 
-![Alt text](http://g.gravizo.com/g?
-  digraph SkyPointer {
-    rankdir=LR;
-    Stellarium [shape=box];
-    Server [shape=box; label="SkyPointer server\nPython"];
-    Arduino [shape=box];
-    Stellarium->Server [dir=both; label="TCP"];
-    Server->Arduino [dir=both; label="USB-serial"];
-  }
-)
+![](images/blocks.png?raw=true "Block diagram")
 
 ## CAD
 
