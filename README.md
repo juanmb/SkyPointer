@@ -1,62 +1,70 @@
 # SkyPointer
 
-## Introduction
+## Description
 
-A laser pointer controlled by software.
+An open-hardware altazimuth mount with a laser pointer.
 
-The following diagram shows the current setup:
+The following block diagram shows the current setup:
+
+![Alt text](http://g.gravizo.com/g?
+  digraph SkyPointer {
+    rankdir=LR;
+    Stellarium [shape=box];
+    Server [shape=box; label="SkyPointer server\nPython"];
+    Arduino [shape=box];
+    Stellarium->Server [dir=both; label="TCP"];
+    Server->Arduino [dir=both; label="USB-serial"];
+  }
+)
+
+## CAD
+
+The SkyPointer mechanical parts were designed to be easily fabricated with a 3D
+printer. The `cad` folder contains the CAD files in Step, STL and
+[FreeCAD](http://www.freecadweb.org) formats.
+
+## Electronics
+
+Circuit schematics and PCB layout were designed with [Kicad](http://kicad-pcb.org).
+They are stored in the `kicad` folder.
+
+## Arduino
+
+An Arduino Uno board controls two stepper motors (azimuth and elevation) using
+a [CNC shield](http://blog.protoneer.co.nz/arduino-cnc-shield/) with some
+modifications (documentation in progress).
+
+The Arduino firmware is located in a
+[separate repo](https://github.com/davidvg/ArduinoSkyPointer).
+
+## The Python server
+
+![](images/server_screenshot.png?raw=true "Screenshot of the server GUI")
+
+The server receives "goto" messages from
+[Stellarium](http://www.stellarium.org/) and sends "current position" packets back.
+
+The Stellarium client-server protocol is documented
+[here](http://www.stellarium.org/wiki/index.php/Telescope_Control_%28client-server%29).
+
+
+### Installing the server in GNU/Linux
+
+Install the required dependencies using your package manager. In Debian/Ubuntu,
+you can use apt-get like this
 
 ```
- +------------+  TCP     +------------+            +------------+ 
- |            |  socket  | SkyPointer | USB-serial | SkyPointer | 
- | Stellarium +--------->| controller +----------->| hardware   | 
- |            |          |  (Python)  |            | (Arduino)  | 
- +------------+          +------------+            +------------+ 
-```
-
-## Hardware
-
-An Arduino Uno board controls two stepper motors (azimuth and elevation) using an
-[Adafruit Motor Shield V2](https://www.adafruit.com/products/1438).
-
-
-## Software
-
-The software controller is coded in Python.
-This project implements a TCP server that receives messages from
-[Stellarium](http://www.stellarium.org/) using its
-[client-server protocol](http://www.stellarium.org/wiki/index.php/Telescope_Control_%28client-server%29).
-
-
-## Installing
-
-### Installing the Arduino firmware
-
-* Download the code with `git clone https://github.com/juanmb/SkyPointer.git`
-* Install the [TimerOne](https://github.com/PaulStoffregen/TimerOne) library
-* Install the [ArduinoSerialCommand](https://github.com/scogswell/ArduinoSerialCommand)
-  library
-* Copy the `arduino/skypointer_motorshield` folder to your Arduino `libraries`
-  directory (or make a symlink to it)
-* Open the file `arduino/skypointer/skypointer.ino` in the Arduino IDE, compile
-  it and upload it to your Arduino Uno board
-
-
-### Installing the Python package in Debian/Ubuntu
-
-Install required Python dependencies
-
-```
-$ sudo apt-get install pyqt4-dev-tools python-numpy
+$ sudo apt-get install pyqt4-dev-tools python-numpy python-scipy
 ```
 
 Now you can install the *skypointer* package with pip
 
 ```
-$ pip install skypointer
+$ sudo pip install skypointer
 ```
 
-Or downloading the source and calling `setup.py` directly from the `python` folder
+Alternatively, you can clone this repo and call `setup.py` directly from the
+`python` folder
 
 ```
 $ git clone https://github.com/juanmb/SkyPointer.git
@@ -68,12 +76,12 @@ For development, it is strongly recommended to install this package into a
 [virtual environment](https://virtualenv.pypa.io/en/latest/).
 
 
-### Installing the Python package in Windows
+### Installing the server in Windows
 
 Using [Anaconda](https://www.continuum.io/downloads):
 
 ```
-conda install numpy pyserial pyqt
+conda install numpy scipy pyserial pyqt
 ```
 
 Now you can install the skypointer package using pip
@@ -82,20 +90,12 @@ Now you can install the skypointer package using pip
 $ pip install skypointer
 ```
 
-Or downloading the source and calling `setup.py` directly from the `python` folder
-
-```
-$ git clone https://github.com/juanmb/SkyPointer.git
-$ cd python
-$ python setup.py install
-```
-
-## Usage
+### Usage
 
 Run `skypointer-gui`.
 
 
-## Communication with Stellarium
+### Communication with Stellarium
 
 * Start `skypointer-gui`.
 
