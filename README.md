@@ -16,7 +16,7 @@ printer. The `cad` folder contains the CAD files in Step, STL and
 
 ## Electronics
 
-Circuit schematics and PCB layout were designed with [Kicad](http://kicad-pcb.org).
+Circuit schematics and PCB layout were designed with [Kicad](http://kicad.org).
 They are stored in the `kicad` folder.
 
 ## Arduino
